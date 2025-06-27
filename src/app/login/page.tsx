@@ -35,6 +35,7 @@ export default function LoginPage() {
                 <FaTelegramPlane size={20} />
                 <span>تسجيل الدخول عبر تيليجرام</span>
               </Link>
+
             </div>
             
             <div className="border-t border-gray-700 pt-6">
