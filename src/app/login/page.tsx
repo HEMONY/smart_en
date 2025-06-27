@@ -32,15 +32,21 @@ export default function LoginPage() {
                 قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
               </p>
               <div className="flex justify-center">
-                <script
-                  async
-                  src="https://telegram.org/js/telegram-widget.js?7"
-                  data-telegram-login="SMARtcolnNbot"   // ← بدون @
-                  data-size="large"
-                  data-auth-url="https://smart-en.vercel.app/api/auth/telegram"
-                  data-request-access="write"
-                ></script>
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: `
+                      <script async src="https://telegram.org/js/telegram-widget.js?7"
+                        data-telegram-login="SMARtcolnNbot"
+                        data-size="large"
+                        data-userpic="false"
+                        data-auth-url="https://smart-en.vercel.app/api/auth/telegram"
+                        data-request-access="write">
+                      </script>
+                    `,
+                  }}
+                />
               </div>
+
 
 
             </div>
