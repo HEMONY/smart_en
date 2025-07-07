@@ -4,6 +4,24 @@ import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect } from "react";
+useEffect(() => {
+  const script = document.createElement("script");
+  script.src = "https://telegram.org/js/telegram-widget.js?7";
+  script.setAttribute("data-telegram-login", "SMARtcoinNbot"); // 👈 تأكد من أنه نفس اسم البوت بدون @
+  script.setAttribute("data-size", "large");
+  script.setAttribute("data-userpic", "true");
+  script.setAttribute("data-radius", "10");
+  script.setAttribute("data-auth-url", "https://smart-en.vercel.app/api/auth/telegram/route.js");
+  script.setAttribute("data-request-access", "write");
+  script.async = true;
+
+  const container = document.getElementById("telegram-login");
+  if (container) {
+    container.innerHTML = ""; // إزالة المحتوى السابق
+    container.appendChild(script);
+  }
+}, []);
 
 export default function LoginPage() {
   return (
@@ -31,10 +49,8 @@ export default function LoginPage() {
               <p className="text-sm text-gray-400 mb-3">
                 قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
               </p>
-              <Link href="/api/auth/telegram" className="primary-button w-full">
-                <FaTelegramPlane size={20} />
-                <span>تسجيل الدخول عبر تيليجرام</span>
-              </Link>
+              <div id="telegram-login" className="flex justify-center mt-2"></div>
+
             </div>
             
             <div className="border-t border-gray-700 pt-6">
