@@ -15,7 +15,7 @@ export default function LoginPage() {
     script.setAttribute("data-size", "large");
     script.setAttribute("data-userpic", "true");
     script.setAttribute("data-radius", "10");
-    script.setAttribute("data-auth-url", "https://smart-en.vercel.app/api/auth/telegram/route.js");
+    script.setAttribute("data-auth-url", "api/auth/telegram");
     script.setAttribute("data-request-access", "write");
     script.async = true;
 
