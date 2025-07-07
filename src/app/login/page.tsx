@@ -17,7 +17,8 @@ export default function LoginPage() {
   script.setAttribute("data-userpic", "true");
   script.setAttribute("data-radius", "10");
   script.setAttribute("data-request-access", "write");
-  script.setAttribute("data-auth-url", "https://smart-en.vercel.app/api/auth/telegram"); // يجب أن يكون هذا هو مسارك
+  script.setAttribute("data-auth-url", "https://smart-en.vercel.app/api/auth/telegram");
+ // يجب أن يكون هذا هو مسارك
   script.async = true;
 
   const container = document.getElementById("telegram-login");
