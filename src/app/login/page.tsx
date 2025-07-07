@@ -7,32 +7,23 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 export default function LoginPage() {
-
-  // 👇 useEffect داخل LoginPage وليس خارجه
   useEffect(() => {
-  const script = document.createElement("script");
-  script.src = "https://telegram.org/js/telegram-widget.js?7";
-  script.setAttribute("data-telegram-login", "SMARtcoinNbot"); // ✅ بدون @
-  script.setAttribute("data-size", "large");
-  script.setAttribute("data-userpic", "true");
-  script.setAttribute("data-radius", "10");
+    const script = document.createElement("script");
+    script.src = "https://telegram.org/js/telegram-widget.js?7";
+    script.setAttribute("data-telegram-login", "SMARtcoinNbot"); // ✅ اسم البوت بدون @
+    script.setAttribute("data-size", "large");
+    script.setAttribute("data-userpic", "true");
+    script.setAttribute("data-radius", "10");
+    script.setAttribute("data-auth-url", "https://smart-en.vercel.app/api/auth/telegram"); // ✅ هذا هو المهم
+    script.setAttribute("data-request-access", "write");
+    script.async = true;
 
-  // 👇 هذا هو المهم! سيرسل بيانات المستخدم إلى هذا الرابط
-  script.setAttribute("data-auth-url", "https://smart-en.vercel.app/api/auth/telegram");
-
-  // ⚠️ لا تكتب return_to، احذف هذا السطر إن وجد
-  // script.setAttribute("data-return-to", "https://smart-en.vercel.app/login"); ❌
-
-  script.setAttribute("data-request-access", "write");
-  script.async = true;
-
-  const container = document.getElementById("telegram-login");
-  if (container) {
-    container.innerHTML = "";
-    container.appendChild(script);
+    const container = document.getElementById("telegram-login");
+    if (container) {
+      container.innerHTML = "";
+      container.appendChild(script);
     }
   }, []);
-
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -47,10 +38,7 @@ export default function LoginPage() {
           />
           <h1 className="text-3xl font-bold gold-text">Smart Coin</h1>
           <p className="text-gray-400 mt-2">منصة التعدين الذكية</p>
-          <p className="text-gray-300 mt-4 text-sm max-w-sm mx-auto">
-            نحن فخورون بالإعلان عن استثمارات بقيمة 350 مليون دولار لدعم رؤيتنا.
-            نسعى لنصبح منصة لا مركزية رائدة لتداول العملات المشفرة، وستكون عملتنا الرقمية جزءًا أساسيًا من نظام الدفع داخل المنصة.
-          </p>
+          <p className="text-gray-300 mt-4 text-sm max-w-sm mx-auto">نحن فخورون بالإعلان عن استثمارات بقيمة 350 مليون دولار لدعم رؤيتنا.</p>
         </div>
 
         <div className="card mb-6">
@@ -60,15 +48,18 @@ export default function LoginPage() {
             <div>
               <h3 className="text-lg mb-2">تسجيل الدخول عبر تيليجرام</h3>
               <p className="text-sm text-gray-400 mb-3">
-                قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
+                قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال معلوماتك مباشرة للبوت.
               </p>
-              <div id="telegram-login" className="flex justify-center mt-2"></div>
+
+              {/* 👇 هذا الزر الرسمي من Telegram الذي ينفذ login مباشرة */}
+              <div id="telegram-login" className="flex justify-center mt-2" />
+
             </div>
             
             <div className="border-t border-gray-700 pt-6">
               <h3 className="text-lg mb-2">تسجيل الدخول عبر محفظة TON</h3>
               <p className="text-sm text-gray-400 mb-3">
-                قم بتسجيل الدخول باستخدام محفظة TON الخاصة بك. سيتم التحقق من هويتك عبر توقيع رسالة بمحفظتك.
+                قم بتسجيل الدخول باستخدام محفظة TON الخاصة بك.
               </p>
               <button className="secondary-button w-full">
                 <SiTon size={20} />
