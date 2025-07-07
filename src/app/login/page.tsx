@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect } from "react";
 useEffect(() => {
   const script = document.createElement("script");
   script.src = "https://telegram.org/js/telegram-widget.js?7";
