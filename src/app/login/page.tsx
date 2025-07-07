@@ -10,22 +10,29 @@ export default function LoginPage() {
 
   // 👇 useEffect داخل LoginPage وليس خارجه
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://telegram.org/js/telegram-widget.js?7";
-    script.setAttribute("data-telegram-login", "SMARtcoinNbot"); // تأكد من صحة اسم البوت
-    script.setAttribute("data-size", "large");
-    script.setAttribute("data-userpic", "true");
-    script.setAttribute("data-radius", "10");
-    script.setAttribute("data-auth-url", "https://smart-en.vercel.app/api/auth/telegram");
-    script.setAttribute("data-return-to", "https://smart-en.vercel.app/dashboard");
-    script.async = true;
+  const script = document.createElement("script");
+  script.src = "https://telegram.org/js/telegram-widget.js?7";
+  script.setAttribute("data-telegram-login", "SMARtcoinNbot"); // ✅ بدون @
+  script.setAttribute("data-size", "large");
+  script.setAttribute("data-userpic", "true");
+  script.setAttribute("data-radius", "10");
 
-    const container = document.getElementById("telegram-login");
-    if (container) {
-      container.innerHTML = ""; // إزالة المحتوى القديم
-      container.appendChild(script);
+  // 👇 هذا هو المهم! سيرسل بيانات المستخدم إلى هذا الرابط
+  script.setAttribute("data-auth-url", "https://smart-en.vercel.app/api/auth/telegram");
+
+  // ⚠️ لا تكتب return_to، احذف هذا السطر إن وجد
+  // script.setAttribute("data-return-to", "https://smart-en.vercel.app/login"); ❌
+
+  script.setAttribute("data-request-access", "write");
+  script.async = true;
+
+  const container = document.getElementById("telegram-login");
+  if (container) {
+    container.innerHTML = "";
+    container.appendChild(script);
     }
   }, []);
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
