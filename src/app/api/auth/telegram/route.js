@@ -59,6 +59,11 @@ export async function POST(request) {
     const url = new URL(request.url);
     const queryParams = Object.fromEntries(url.searchParams.entries());
 
+    // Telegram sends all values as string, normalize them for verification
+    queryParams.auth_date = String(queryParams.auth_date);
+    queryParams.id = String(queryParams.id);
+
+
     // التحقق من صحة البيانات
     if (!verifyTelegramData(queryParams)) {
       console.warn('Telegram data verification failed.');
