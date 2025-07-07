@@ -1,31 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
 import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function LoginPage() {
-
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://telegram.org/js/telegram-widget.js?7";
-    script.setAttribute("data-telegram-login", "SMARtcoinNbot"); // <-- تأكد من أنه معرف البوت الصحيح بدون @
-    script.setAttribute("data-size", "large");
-    script.setAttribute("data-userpic", "true");
-    script.setAttribute("data-radius", "10");
-    script.setAttribute("data-auth-url", "api/auth/telegram");
-    script.setAttribute("data-request-access", "write");
-    script.async = true;
-
-    const container = document.getElementById("telegram-login");
-    if (container) {
-      container.innerHTML = ""; // احذف أي محتوى قديم
-      container.appendChild(script);
-    }
-  }, []);
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -39,10 +19,7 @@ export default function LoginPage() {
           />
           <h1 className="text-3xl font-bold gold-text">Smart Coin</h1>
           <p className="text-gray-400 mt-2">منصة التعدين الذكية</p>
-          <p className="text-gray-300 mt-4 text-sm max-w-sm mx-auto">
-            نحن فخورون بالإعلان عن استثمارات بقيمة 350 مليون دولار لدعم رؤيتنا.
-            نسعى لنصبح منصة لا مركزية رائدة لتداول العملات المشفرة، وستكون عملتنا الرقمية جزءًا أساسيًا من نظام الدفع داخل المنصة.
-          </p>
+          <p className="text-gray-300 mt-4 text-sm max-w-sm mx-auto">نحن فخورون بالإعلان عن استثمارات بقيمة 350 مليون دولار لدعم رؤيتنا. نسعى لنصبح منصة لا مركزية رائدة لتداول العملات المشفرة، وستكون عملتنا الرقمية جزءًا أساسيًا من نظام الدفع داخل المنصة.</p>
         </div>
 
         <div className="card mb-6">
@@ -54,7 +31,10 @@ export default function LoginPage() {
               <p className="text-sm text-gray-400 mb-3">
                 قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
               </p>
-              <div id="telegram-login" className="flex justify-center mt-2"></div>
+              <Link href="/api/auth/telegram" className="primary-button w-full">
+                <FaTelegramPlane size={20} />
+                <span>تسجيل الدخول عبر تيليجرام</span>
+              </Link>
             </div>
             
             <div className="border-t border-gray-700 pt-6">
@@ -79,3 +59,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
