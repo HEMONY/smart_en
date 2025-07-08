@@ -1,9 +1,11 @@
-"use client";
+'use client';
 
+import { useEffect } from 'react';
+import Script from 'next/script';
+import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
-import Script from 'next/script';
 
 export default function LoginPage() {
   return (
@@ -28,26 +30,33 @@ export default function LoginPage() {
           <h2 className="text-xl font-bold mb-4 text-center">اختر طريقة تسجيل الدخول المفضلة لديك</h2>
           
           <div className="space-y-6">
+            {/* تسجيل الدخول عبر تيليجرام */}
             <div>
               <h3 className="text-lg mb-2">تسجيل الدخول عبر تيليجرام</h3>
               <p className="text-sm text-gray-400 mb-3">
-                قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم التحقق من هويتك تلقائيًا.
+                قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
               </p>
 
-              {/* Telegram Login Widget */}
-              <div id="telegram-login-button" className="flex justify-center mb-2"></div>
+              {/* زر تيليجرام (Telegram Login Widget) */}
+              <div id="telegram-login" className="flex justify-center mt-2"></div>
 
               <Script
                 src="https://telegram.org/js/telegram-widget.js?22"
                 strategy="lazyOnload"
-                data-telegram-login="SmartCoinLoginBot" // <-- ضع هنا اسم البوت الحقيقي بدون @
+                onLoad={() => {
+                  console.log('✅ Telegram widget loaded');
+                }}
+                // خصائص وسم Telegram Login
+                data-telegram-login="SMARtcoinNbot" // اسم البوت بدون @
                 data-size="large"
                 data-userpic="true"
+                data-radius="10"
                 data-request-access="write"
                 data-auth-url="https://smart-en.vercel.app/api/auth/telegram"
               />
             </div>
-            
+
+            {/* تسجيل الدخول عبر محفظة TON */}
             <div className="border-t border-gray-700 pt-6">
               <h3 className="text-lg mb-2">تسجيل الدخول عبر محفظة TON</h3>
               <p className="text-sm text-gray-400 mb-3">
@@ -60,10 +69,13 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-        
+
         <div className="text-center">
           <p className="text-sm text-gray-400">
-            بالتسجيل، أنت توافق على <Link href="/terms" className="text-primary-gold">شروط الاستخدام</Link> و <Link href="/privacy" className="text-primary-gold">سياسة الخصوصية</Link>
+            بالتسجيل، أنت توافق على{' '}
+            <Link href="/terms" className="text-primary-gold">شروط الاستخدام</Link>{' '}
+            و{' '}
+            <Link href="/privacy" className="text-primary-gold">سياسة الخصوصية</Link>
           </p>
         </div>
       </div>
