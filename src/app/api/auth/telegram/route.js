@@ -53,6 +53,7 @@ function verifyTelegramData(data) {
 }
 
 export async function GET(request) {
+  
   try {
     // The Telegram widget sends data via query parameters on GET request, not POST body
     // Let's adjust to handle GET request and query parameters
