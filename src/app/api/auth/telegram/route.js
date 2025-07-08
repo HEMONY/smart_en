@@ -150,7 +150,7 @@ export async function GET(request) {
 }
 
 // Add a GET handler since Telegram widget uses GET for callback
-export async function GET(request) {
+export async function POST(request) {
     // Reuse the POST logic, as the data comes in query params for GET
     return await POST(request);
 }
