@@ -33,7 +33,7 @@ export default function LoginPage() {
           <div id="telegram-login" className="mb-6 flex justify-center">
             <Script
               src="https://telegram.org/js/telegram-widget.js?22"
-              data-telegram-login="SmartCoinBot" // <-- ضع هنا اسم البوت الخاص بك بدون @
+              data-telegram-login="SMARtcoinNbot" // <-- ضع هنا اسم البوت الخاص بك بدون @
               data-size="large"
               data-userpic="true"
               data-request-access="write"
