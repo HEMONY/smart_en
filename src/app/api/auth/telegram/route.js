@@ -55,6 +55,8 @@ function verifyTelegramData(data) {
 export async function GET(request) {
   
   try {
+    console.log("Query Parameters from Telegram:", queryParams);
+
     // The Telegram widget sends data via query parameters on GET request, not POST body
     // Let's adjust to handle GET request and query parameters
     const url = new URL(request.url);
