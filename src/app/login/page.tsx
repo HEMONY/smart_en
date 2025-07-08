@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect } from 'react';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
@@ -7,19 +6,19 @@ import Link from 'next/link';
 
 export default function LoginPage() {
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://telegram.org/js/telegram-widget.js?7";
-    script.setAttribute("data-telegram-login", "SMARtcoinNbot"); // بدون @
-    script.setAttribute("data-size", "large");
-    script.setAttribute("data-userpic", "true");
-    script.setAttribute("data-radius", "10");
-    script.setAttribute("data-request-access", "write");
-    script.setAttribute("data-auth-url", "https://smart-en.vercel.app/api/auth/telegram"); // مسار مصادقتك
+    const script = document.createElement('script');
+    script.src = 'https://telegram.org/js/telegram-widget.js?7';
+    script.setAttribute('data-telegram-login', 'SMARtcoinNbot'); // بدون @
+    script.setAttribute('data-size', 'large');
+    script.setAttribute('data-userpic', 'true');
+    script.setAttribute('data-radius', '10');
+    script.setAttribute('data-request-access', 'write');
+    script.setAttribute('data-auth-url', 'https://smart-en.vercel.app/api/auth/telegram'); // هنا نضع رابط API
     script.async = true;
 
-    const container = document.getElementById("telegram-login");
+    const container = document.getElementById('telegram-login');
     if (container) {
-      container.innerHTML = "";
+      container.innerHTML = '';
       container.appendChild(script);
     }
   }, []);
@@ -49,11 +48,11 @@ export default function LoginPage() {
             <div>
               <h3 className="text-lg mb-2">تسجيل الدخول عبر تيليجرام</h3>
               <p className="text-sm text-gray-400 mb-3">
-                قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
+                قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم التحقق مباشرة عبر البوت.
               </p>
 
-              {/* ✅ زر تسجيل الدخول من Telegram */}
-              <div id="telegram-login" className="flex justify-center mt-2"></div>
+              {/* هذا هو زر تيليجرام الحقيقي */}
+              <div id="telegram-login" className="flex justify-center"></div>
             </div>
 
             <div className="border-t border-gray-700 pt-6">
@@ -71,7 +70,9 @@ export default function LoginPage() {
 
         <div className="text-center">
           <p className="text-sm text-gray-400">
-            بالتسجيل، أنت توافق على <Link href="/terms" className="text-primary-gold">شروط الاستخدام</Link> و <Link href="/privacy" className="text-primary-gold">سياسة الخصوصية</Link>
+            بالتسجيل، أنت توافق على{' '}
+            <Link href="/terms" className="text-primary-gold">شروط الاستخدام</Link> و{' '}
+            <Link href="/privacy" className="text-primary-gold">سياسة الخصوصية</Link>
           </p>
         </div>
       </div>
