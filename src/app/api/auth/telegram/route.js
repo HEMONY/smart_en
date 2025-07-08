@@ -67,6 +67,15 @@ export async function GET(request) {
       const errorUrl = new URL('/login?error=telegram_auth_failed', request.url);
       return NextResponse.redirect(errorUrl.toString(), 302);
     }
+    // إذا كانت البيانات صحيحة، يمكنك أيضاً طباعة:
+    console.log("✅ المستخدم مصدق من Telegram:");
+    console.log("ID:", queryParams.id);
+    console.log("Username:", queryParams.username);
+    console.log("First name:", queryParams.first_name);
+    console.log("Last name:", queryParams.last_name);
+    console.log("Photo URL:", queryParams.photo_url);
+    console.log("Auth Date:", queryParams.auth_date);
+    console.log("Hash:", queryParams.hash);
 
     const telegramUserData = queryParams;
 
