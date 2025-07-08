@@ -1,11 +1,29 @@
-"use client";
+'use client';
 
-import { FaTelegramPlane } from 'react-icons/fa';
+import { useEffect } from 'react';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function LoginPage() {
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://telegram.org/js/telegram-widget.js?7";
+    script.setAttribute("data-telegram-login", "SMARtcoinNbot"); // بدون @
+    script.setAttribute("data-size", "large");
+    script.setAttribute("data-userpic", "true");
+    script.setAttribute("data-radius", "10");
+    script.setAttribute("data-request-access", "write");
+    script.setAttribute("data-auth-url", "https://smart-en.vercel.app/api/auth/telegram"); // مسار مصادقتك
+    script.async = true;
+
+    const container = document.getElementById("telegram-login");
+    if (container) {
+      container.innerHTML = "";
+      container.appendChild(script);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -19,24 +37,25 @@ export default function LoginPage() {
           />
           <h1 className="text-3xl font-bold gold-text">Smart Coin</h1>
           <p className="text-gray-400 mt-2">منصة التعدين الذكية</p>
-          <p className="text-gray-300 mt-4 text-sm max-w-sm mx-auto">نحن فخورون بالإعلان عن استثمارات بقيمة 350 مليون دولار لدعم رؤيتنا. نسعى لنصبح منصة لا مركزية رائدة لتداول العملات المشفرة، وستكون عملتنا الرقمية جزءًا أساسيًا من نظام الدفع داخل المنصة.</p>
+          <p className="text-gray-300 mt-4 text-sm max-w-sm mx-auto">
+            نحن فخورون بالإعلان عن استثمارات بقيمة 350 مليون دولار لدعم رؤيتنا. نسعى لنصبح منصة لا مركزية رائدة لتداول العملات المشفرة، وستكون عملتنا الرقمية جزءًا أساسيًا من نظام الدفع داخل المنصة.
+          </p>
         </div>
 
         <div className="card mb-6">
           <h2 className="text-xl font-bold mb-4 text-center">اختر طريقة تسجيل الدخول المفضلة لديك</h2>
-          
+
           <div className="space-y-6">
             <div>
               <h3 className="text-lg mb-2">تسجيل الدخول عبر تيليجرام</h3>
               <p className="text-sm text-gray-400 mb-3">
                 قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
               </p>
-              <Link href="/api/auth/telegram" className="primary-button w-full">
-                <FaTelegramPlane size={20} />
-                <span>تسجيل الدخول عبر تيليجرام</span>
-              </Link>
+
+              {/* ✅ زر تسجيل الدخول من Telegram */}
+              <div id="telegram-login" className="flex justify-center mt-2"></div>
             </div>
-            
+
             <div className="border-t border-gray-700 pt-6">
               <h3 className="text-lg mb-2">تسجيل الدخول عبر محفظة TON</h3>
               <p className="text-sm text-gray-400 mb-3">
@@ -49,7 +68,7 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-        
+
         <div className="text-center">
           <p className="text-sm text-gray-400">
             بالتسجيل، أنت توافق على <Link href="/terms" className="text-primary-gold">شروط الاستخدام</Link> و <Link href="/privacy" className="text-primary-gold">سياسة الخصوصية</Link>
@@ -59,4 +78,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
