@@ -19,7 +19,7 @@ function verifyTelegramData(data) {
     console.error('Telegram Bot Token is not configured!');
     return false; // Fail verification if token is missing
   }
-
+ 
   const receivedHash = data.hash;
   if (!receivedHash) {
     return false;
