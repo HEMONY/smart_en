@@ -38,7 +38,7 @@ export default function LoginPage() {
               </p>
 
               {/* زر تيليجرام (Telegram Login Widget) */}
-              <div id="telegram-login" className="flex justify-center mt-2"></div>
+              <div id="telegram-login" className="flex justify-center mt-4"></div>
 
               <Script
                 src="https://telegram.org/js/telegram-widget.js?22"
@@ -46,15 +46,14 @@ export default function LoginPage() {
                 onLoad={() => {
                   console.log('✅ Telegram widget loaded');
                 }}
-                // خصائص وسم Telegram Login
-                data-telegram-login="SMARtcoinNbot" // اسم البوت بدون @
+                data-telegram-login="SMARtcoinNbot"
                 data-size="large"
                 data-userpic="true"
                 data-radius="10"
                 data-request-access="write"
                 data-auth-url="https://smart-en.vercel.app/api/auth/telegram"
               />
-            </div>
+
 
             {/* تسجيل الدخول عبر محفظة TON */}
             <div className="border-t border-gray-700 pt-6">
