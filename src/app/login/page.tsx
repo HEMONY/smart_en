@@ -29,20 +29,18 @@ export default function LoginPage() {
       />
 
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Image 
-            src="/assets/smart-coin-logo.png" 
-            alt="Smart Coin" 
-            width={120} 
-            height={120} 
-            className="mx-auto mb-4"
-          />
-          <h1 className="text-3xl font-bold gold-text">Smart Coin</h1>
-          <p className="text-gray-400 mt-2">منصة التعدين الذكية</p>
-          <p className="text-gray-300 mt-4 text-sm max-w-sm mx-auto">
-            نحن فخورون بالإعلان عن استثمارات بقيمة 350 مليون دولار لدعم رؤيتنا. نسعى لنصبح منصة لا مركزية رائدة لتداول العملات المشفرة، وستكون عملتنا الرقمية جزءًا أساسيًا من نظام الدفع داخل المنصة.
-          </p>
-        </div>
+        <div
+          dangerouslySetInnerHTML={{
+            __html: `<script async src="https://telegram.org/js/telegram-widget.js?7"
+              data-telegram-login="Tesmiapbot"
+              data-size="large"
+              data-userpic="true"
+              data-request-access="write"
+              data-auth-url="https://smart-en.vercel.app/api/auth/telegram">
+            </script>`
+          }}
+        />
+
 
         <div className="card mb-6">
           <h2 className="text-xl font-bold mb-4 text-center">اختر طريقة تسجيل الدخول المفضلة لديك</h2>
