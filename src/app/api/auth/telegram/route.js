@@ -15,11 +15,11 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 // التحقق من صحة بيانات تيليغرام
 // Reference: https://core.telegram.org/widgets/login#checking-authorization
 function verifyTelegramData(data) {
-  if (!TELEGRAM_BOT_TOKEN) {
+  if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === '7790436103:AAH4KwfhqwqYeeVzRwxrVhk3ZlTHkzHoP40') {
     console.error('Telegram Bot Token is not configured!');
     return false; // Fail verification if token is missing
   }
- 
+
   const receivedHash = data.hash;
   if (!receivedHash) {
     return false;
@@ -52,16 +52,12 @@ function verifyTelegramData(data) {
   }
 }
 
-export async function GET(request) {
-  
+export async function POST(request) {
   try {
-    
-
     // The Telegram widget sends data via query parameters on GET request, not POST body
     // Let's adjust to handle GET request and query parameters
     const url = new URL(request.url);
     const queryParams = Object.fromEntries(url.searchParams.entries());
-    console.log("Query Parameters from Telegram:", queryParams);
 
     // التحقق من صحة البيانات
     if (!verifyTelegramData(queryParams)) {
@@ -70,15 +66,6 @@ export async function GET(request) {
       const errorUrl = new URL('/login?error=telegram_auth_failed', request.url);
       return NextResponse.redirect(errorUrl.toString(), 302);
     }
-    // إذا كانت البيانات صحيحة، يمكنك أيضاً طباعة:
-    console.log("✅ المستخدم مصدق من Telegram:");
-    console.log("ID:", queryParams.id);
-    console.log("Username:", queryParams.username);
-    console.log("First name:", queryParams.first_name);
-    console.log("Last name:", queryParams.last_name);
-    console.log("Photo URL:", queryParams.photo_url);
-    console.log("Auth Date:", queryParams.auth_date);
-    console.log("Hash:", queryParams.hash);
 
     const telegramUserData = queryParams;
 
@@ -162,9 +149,9 @@ export async function GET(request) {
 }
 
 // Add a GET handler since Telegram widget uses GET for callback
-export async function POST(request) {
+export async function GET(request) {
     // Reuse the POST logic, as the data comes in query params for GET
-    return await GET(request);
+    return await POST(request);
 }
 
 
