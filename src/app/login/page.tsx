@@ -1,15 +1,24 @@
-"use client";
+'use client';
 
-import { FaTelegramPlane } from "react-icons/fa";
-import { SiTon } from "react-icons/si";
-import Image from "next/image";
-import Link from "next/link";
-import Script from "next/script";
+import { FaTelegramPlane } from 'react-icons/fa';
+import { SiTon } from 'react-icons/si';
+import Image from 'next/image';
+import Script from 'next/script';
+import Link from 'next/link';
+import { useEffect } from 'react';
 
 export default function LoginPage() {
+  useEffect(() => {
+    // تحميل سكربت تيليجرام فقط في العميل
+    const script = document.createElement('script');
+    script.src = 'https://telegram.org/js/telegram-widget.js?22';
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      {/* تحميل سكربت تيليجرام */}
+      {/* سكربت تيليجرام (اختياري إذا استعملت useEffect أعلاه) */}
       <Script src="https://telegram.org/js/telegram-widget.js?22" strategy="afterInteractive" />
 
       <div className="w-full max-w-md">
@@ -36,17 +45,21 @@ export default function LoginPage() {
             <div>
               <h3 className="text-lg mb-2">تسجيل الدخول عبر تيليجرام</h3>
               <p className="text-sm text-gray-400 mb-3">
-                قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال معلومات الحساب مباشرة.
+                قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
               </p>
 
-              <div className="flex justify-center">
+              {/* زر تسجيل الدخول عبر تيليجرام */}
+              <div
+                className="flex justify-center"
+                style={{ direction: 'ltr' }}
+              >
                 <div
                   className="telegram-login"
-                  data-telegram-login="SMARtcoinNbot"  // اسم البوت بدون @
+                  data-telegram-login="SMARtcoinNbot" // ← غيّر هذا لاسم البوت الصحيح بدون @
                   data-size="large"
                   data-userpic="true"
                   data-radius="10"
-                  data-auth-url="https://smart-en.vercel.app/api/auth/telegram" // رابط التحقق
+                  data-auth-url="https://smart-en.vercel.app/api/auth/telegram"
                   data-request-access="write"
                 ></div>
               </div>
@@ -68,7 +81,14 @@ export default function LoginPage() {
 
         <div className="text-center">
           <p className="text-sm text-gray-400">
-            بالتسجيل، أنت توافق على <Link href="/terms" className="text-primary-gold">شروط الاستخدام</Link> و <Link href="/privacy" className="text-primary-gold">سياسة الخصوصية</Link>
+            بالتسجيل، أنت توافق على{' '}
+            <Link href="/terms" className="text-primary-gold">
+              شروط الاستخدام
+            </Link>{' '}
+            و{' '}
+            <Link href="/privacy" className="text-primary-gold">
+              سياسة الخصوصية
+            </Link>
           </p>
         </div>
       </div>
