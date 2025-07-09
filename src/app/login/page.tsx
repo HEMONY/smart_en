@@ -4,6 +4,7 @@ import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
+import Script from 'next/script';
 
 export default function LoginPage() {
   return (
@@ -31,10 +32,18 @@ export default function LoginPage() {
               <p className="text-sm text-gray-400 mb-3">
                 قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
               </p>
-              <Link href="/api/auth/telegram" className="primary-button w-full">
-                <FaTelegramPlane size={20} />
-                <span>تسجيل الدخول عبر تيليجرام</span>
-              </Link>
+
+              {/* ✅ زر Telegram الرسمي يرسل كل البيانات مباشرة إلى /api/auth/telegram */}
+              <div className="flex justify-center">
+                <div
+                  className="telegram-login"
+                  data-telegram-login="SMARtcoinNbot"       // ← اسم البوت بدون @
+                  data-size="large"
+                  data-userpic="true"
+                  data-request-access="write"
+                  data-auth-url="https://smart-en.vercel.app/api/auth/telegram"
+                ></div>
+              </div>
             </div>
             
             <div className="border-t border-gray-700 pt-6">
@@ -56,7 +65,9 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+
+      {/* ✅ تضمين سكربت تيليجرام بعد تحميل الصفحة */}
+      <Script src="https://telegram.org/js/telegram-widget.js?7" strategy="afterInteractive" />
     </div>
   );
 }
-
