@@ -37,7 +37,7 @@ export default function LoginPage() {
               <div className="flex justify-center">
                 <div
                   className="telegram-login"
-                  data-telegram-login="SMARtcoinNbot"       // ← اسم البوت بدون @
+                  data-telegram-login="Tesmiapbot"       // ← اسم البوت بدون @
                   data-size="large"
                   data-userpic="true"
                   data-request-access="write"
