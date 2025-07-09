@@ -5,6 +5,13 @@ import Script from 'next/script';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
+declare global {
+  interface Window {
+    TelegramLoginWidget?: {
+      init: () => void;
+    };
+  }
+}
 
 export default function LoginPage() {
   useEffect(() => {
