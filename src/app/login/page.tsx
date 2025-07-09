@@ -34,6 +34,7 @@ export default function LoginPage() {
               </p>
 
               {/* ✅ زر Telegram الرسمي يرسل كل البيانات مباشرة إلى /api/auth/telegram */}
+              <Script src="https://telegram.org/js/telegram-widget.js?7" strategy="afterInteractive" />
               <div className="flex justify-center">
                 <div
                   className="telegram-login"
