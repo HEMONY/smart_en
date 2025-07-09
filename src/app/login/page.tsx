@@ -1,15 +1,25 @@
 'use client';
 
+import { useEffect } from 'react';
 import Script from 'next/script';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function LoginPage() {
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.TelegramLoginWidget) {
+      window.TelegramLoginWidget.init();
+    }
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       {/* تحميل سكربت تيليجرام */}
-      <Script src="https://telegram.org/js/telegram-widget.js?7" strategy="afterInteractive" />
+      <Script
+        src="https://telegram.org/js/telegram-widget.js?7"
+        strategy="afterInteractive"
+      />
 
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
@@ -41,7 +51,7 @@ export default function LoginPage() {
               <div className="flex justify-center">
                 <div
                   className="telegram-login"
-                  data-telegram-login="SMARtcoinNbot"  // ← اسم البوت بدون @
+                  data-telegram-login="Tesmiapbot"
                   data-size="large"
                   data-userpic="true"
                   data-request-access="write"
