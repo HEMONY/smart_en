@@ -56,15 +56,17 @@ export default function LoginPage() {
 
               {/* زر تسجيل الدخول عبر تيليجرام */}
               <div className="flex justify-center">
-                <div
-                  className="telegram-login"
+              <div dangerouslySetInnerHTML={{
+                __html: `<script async src="https://telegram.org/js/telegram-widget.js?7"
                   data-telegram-login="Tesmiapbot"
                   data-size="large"
                   data-userpic="true"
                   data-request-access="write"
-                  data-auth-url="https://smart-en.vercel.app/api/auth/telegram"
-                ></div>
-              </div>
+                  data-auth-url="https://smart-en.vercel.app/api/auth/telegram">
+                </script>`
+              }} />
+            </div>
+
             </div>
 
             <div className="border-t border-gray-700 pt-6">
