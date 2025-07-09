@@ -4,7 +4,7 @@ import crypto from 'crypto';
 
 // --- Telegram API Credentials ---
 // !!! SECURITY WARNING: Move these to environment variables (.env file) !!!
-const TELEGRAM_API_ID = '20942401'; // Provided by user
+const TELEGRAM_API_ID = '26636744'; // Provided by user
 const TELEGRAM_BOT_TOKEN = '8002470444:AAHKFlbocuKZNxmr2sWYGfyycWNInh7spcA'; // Provided by user
 
 // إعداد عميل Supabase
