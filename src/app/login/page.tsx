@@ -1,4 +1,5 @@
 "use client";
+import Script from 'next/script'; // ⬅️ مهم جداً
 
 import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
