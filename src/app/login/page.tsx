@@ -37,13 +37,14 @@ export default function LoginPage() {
                 className="flex justify-center"
               >
                 <div
-                  className="telegram-login"
-                  data-telegram-login="Tesmiapbot"  // <-- بدون @
+                  id="telegram-login"
+                  data-telegram-login="Tesmiapbot"
                   data-size="large"
                   data-userpic="false"
                   data-request-access="write"
                   data-auth-url="https://smart-en.vercel.app/api/auth/telegram"
                 ></div>
+
               </div>
 
             </div>
