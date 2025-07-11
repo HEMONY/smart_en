@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
@@ -15,11 +15,18 @@ declare global {
 
 export default function LoginPage() {
   const router = useRouter();
+  const [isTelegram, setIsTelegram] = useState(false);
+
+  useEffect(() => {
+    const tgUser = window?.Telegram?.WebApp?.initDataUnsafe?.user;
+    if (tgUser) setIsTelegram(true);
+  }, []);
 
   const handleTelegramLogin = async () => {
     const tgUser = window?.Telegram?.WebApp?.initDataUnsafe?.user;
+
     if (!tgUser) {
-      alert('⚠️ لا يمكن الحصول على بيانات المستخدم من Telegram. تأكد أنك داخل التطبيق.');
+      alert('⚠️ لا يمكن الحصول على بيانات المستخدم من Telegram. تأكد أنك داخل تطبيق تيليجرام.');
       return;
     }
 
@@ -30,15 +37,14 @@ export default function LoginPage() {
         body: JSON.stringify(tgUser),
       });
 
-      if (res.redirected) {
-        router.push(res.url);
+      const data = await res.json();
+
+      if (data.ok) {
+        alert('✅ تم تسجيل الدخول بنجاح!');
+        router.push('/dashboard');
       } else {
-        const data = await res.json();
-        if (data.ok) {
-          alert('✅ تم تسجيل الدخول بنجاح!');
-        } else {
-          alert('❌ فشل التحقق من المستخدم!');
-        }
+        alert('❌ فشل التحقق من المستخدم!');
+        console.log(data);
       }
     } catch (err) {
       console.error('❌ فشل في إرسال الطلب:', err);
@@ -47,7 +53,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#121c28]">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Image 
@@ -66,19 +72,23 @@ export default function LoginPage() {
 
         <div className="card mb-6">
           <h2 className="text-xl font-bold mb-4 text-center">اختر طريقة تسجيل الدخول المفضلة لديك</h2>
-          
+
           <div className="space-y-6">
             <div>
               <h3 className="text-lg mb-2">تسجيل الدخول عبر تيليجرام</h3>
               <p className="text-sm text-gray-400 mb-3">
-                قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك من داخل التطبيق.
+                يجب استخدام هذا الخيار من داخل تطبيق تيليجرام.
               </p>
-              <button onClick={handleTelegramLogin} className="primary-button w-full">
+              <button
+                onClick={handleTelegramLogin}
+                className={`primary-button w-full ${!isTelegram ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={!isTelegram}
+              >
                 <FaTelegramPlane size={20} />
                 <span>تسجيل الدخول عبر تيليجرام</span>
               </button>
             </div>
-            
+
             <div className="border-t border-gray-700 pt-6">
               <h3 className="text-lg mb-2">تسجيل الدخول عبر محفظة TON</h3>
               <p className="text-sm text-gray-400 mb-3">
@@ -91,10 +101,12 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-        
+
         <div className="text-center">
           <p className="text-sm text-gray-400">
-            بالتسجيل، أنت توافق على <Link href="/terms" className="text-primary-gold">شروط الاستخدام</Link> و <Link href="/privacy" className="text-primary-gold">سياسة الخصوصية</Link>
+            بالتسجيل، أنت توافق على{' '}
+            <Link href="/terms" className="text-primary-gold">شروط الاستخدام</Link> و{' '}
+            <Link href="/privacy" className="text-primary-gold">سياسة الخصوصية</Link>
           </p>
         </div>
       </div>
