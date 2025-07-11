@@ -7,12 +7,37 @@ import Link from 'next/link';
 
 declare global {
   interface Window {
+    Telegram: any;
     onTelegramAuth: (user: any) => void;
   }
 }
 
 export default function LoginPage() {
   useEffect(() => {
+    // ✅ تسجيل الدخول من داخل Telegram WebApp (Mini App)
+    const tgUser = window?.Telegram?.WebApp?.initDataUnsafe?.user;
+    if (tgUser) {
+      console.log('✅ تم اكتشاف مستخدم داخل تيليجرام:', tgUser);
+      fetch('/api/auth/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tgUser),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.ok) {
+            alert('✅ تم تسجيل الدخول من تيليجرام!');
+            // window.location.href = '/dashboard';
+          } else {
+            alert('❌ فشل التحقق من المستخدم داخل تيليجرام');
+          }
+        })
+        .catch((err) => {
+          console.error('خطأ في تسجيل الدخول من تيليجرام:', err);
+        });
+    }
+
+    // ✅ تسجيل الدخول من المتصفح (عبر زر Telegram Login Widget)
     window.onTelegramAuth = function (user) {
       fetch('/api/auth/telegram', {
         method: 'POST',
@@ -34,11 +59,11 @@ export default function LoginPage() {
         });
     };
 
-    // ✅ إنشاء عنصر السكربت وإضافته يدويًا
+    // ✅ إدخال زر Telegram Widget في الصفحة ديناميكياً
     const script = document.createElement('script');
     script.src = 'https://telegram.org/js/telegram-widget.js?7';
     script.async = true;
-    script.setAttribute('data-telegram-login', 'ASMARTCOINBOT'); // <-- بدون @
+    script.setAttribute('data-telegram-login', 'ASMARTCOINBOT'); // <-- اسم البوت بدون @
     script.setAttribute('data-size', 'large');
     script.setAttribute('data-userpic', 'true');
     script.setAttribute('data-lang', 'ar');
@@ -47,8 +72,8 @@ export default function LoginPage() {
 
     const container = document.getElementById('telegram-button-container');
     if (container) {
-      container.innerHTML = ''; // تفريغ الحاوية
-      container.appendChild(script); // إرفاق السكربت
+      container.innerHTML = '';
+      container.appendChild(script);
     }
   }, []);
 
