@@ -15,15 +15,13 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 // التحقق من صحة بيانات تيليغرام
 // Reference: https://core.telegram.org/widgets/login#checking-authorization
 function verifyTelegramData(data) {
-  if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === '7692158570:AAEBAeaSrTKkXmb0Te5Td1fAvwcnij4qv9g') {
+  if (!TELEGRAM_BOT_TOKEN) {
     console.error('Telegram Bot Token is not configured!');
-    return false; // Fail verification if token is missing
+    return false;
   }
 
   const receivedHash = data.hash;
-  if (!receivedHash) {
-    return false;
-  }
+  if (!receivedHash) return false;
 
   const dataCheckString = Object.keys(data)
     .filter((key) => key !== 'hash')
@@ -32,25 +30,28 @@ function verifyTelegramData(data) {
     .join('\n');
 
   try {
+    // ✅ أنشئ مفتاح السر من bot token
     const secretKey = crypto.createHash('sha256').update(TELEGRAM_BOT_TOKEN).digest();
-    const calculatedHash = crypto.createHmac('sha256', secretKey)
-      .update(dataCheckString)
-      .digest('hex');
 
-    // Check if data is outdated (e.g., older than 1 day)
+    // ✅ توليد HMAC باستخدام المفتاح السري
+    const hmac = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+    // ✅ تأكد أن auth_date ليست قديمة
     const authDate = parseInt(data.auth_date, 10);
     const now = Math.floor(Date.now() / 1000);
-    if (now - authDate > 86400) { // 86400 seconds = 1 day
-        console.warn("Telegram data is outdated.");
-        return false;
+    if (now - authDate > 86400) {
+      console.warn('Telegram auth data is too old.');
+      return false;
     }
 
-    return calculatedHash === receivedHash;
+    // ✅ تحقق من تطابق الهاش
+    return hmac === receivedHash;
   } catch (error) {
     console.error('Error verifying Telegram data:', error);
     return false;
   }
 }
+
 
 export async function POST(request) {
   try {
