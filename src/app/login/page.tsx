@@ -64,7 +64,7 @@ export default function LoginPage() {
                 <script
                   async
                   src="https://telegram.org/js/telegram-widget.js?7"
-                  data-telegram-login="SmartCoinBot" // <-- غيّر هذا لاسم البوت بدون @
+                  data-telegram-login="ASMARTCOINBOT" // <-- غيّر هذا لاسم البوت بدون @
                   data-size="large"
                   data-userpic="true"
                   data-lang="ar"
