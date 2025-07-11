@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,11 +13,17 @@ declare global {
 }
 
 export default function LoginPage() {
+  // حالة لمعرفة إذا المستخدم داخل Telegram Mini App
+  const [isInsideTelegram, setIsInsideTelegram] = useState(false);
+
   useEffect(() => {
-    // ✅ تسجيل الدخول من داخل Telegram WebApp (Mini App)
+    // تحقق هل داخل Telegram Mini App
     const tgUser = window?.Telegram?.WebApp?.initDataUnsafe?.user;
     if (tgUser) {
+      setIsInsideTelegram(true);
       console.log('✅ تم اكتشاف مستخدم داخل تيليجرام:', tgUser);
+
+      // أرسل بيانات المستخدم للسيرفر مباشرة بدون زر تسجيل دخول
       fetch('/api/auth/telegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -27,7 +33,7 @@ export default function LoginPage() {
         .then((data) => {
           if (data.ok) {
             alert('✅ تم تسجيل الدخول من تيليجرام!');
-            // window.location.href = '/dashboard';
+            // window.location.href = '/dashboard'; // أو إعادة التوجيه حسب حاجتك
           } else {
             alert('❌ فشل التحقق من المستخدم داخل تيليجرام');
           }
@@ -35,45 +41,48 @@ export default function LoginPage() {
         .catch((err) => {
           console.error('خطأ في تسجيل الدخول من تيليجرام:', err);
         });
-    }
+    } else {
+      // المستخدم ليس داخل Telegram Mini App، نعرض زر تسجيل الدخول التقليدي
+      setIsInsideTelegram(false);
 
-    // ✅ تسجيل الدخول من المتصفح (عبر زر Telegram Login Widget)
-    window.onTelegramAuth = function (user) {
-      fetch('/api/auth/telegram', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(user),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.ok) {
-            alert('✅ تم تسجيل الدخول بنجاح!');
-            // window.location.href = '/dashboard';
-          } else {
-            alert('❌ فشل التحقق من المستخدم!');
-            console.log(data);
-          }
+      // نهيء دالة callback للـ Telegram Login Widget
+      window.onTelegramAuth = function (user) {
+        fetch('/api/auth/telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(user),
         })
-        .catch((err) => {
-          console.error('خطأ أثناء تسجيل الدخول:', err);
-        });
-    };
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.ok) {
+              alert('✅ تم تسجيل الدخول بنجاح!');
+              // window.location.href = '/dashboard';
+            } else {
+              alert('❌ فشل التحقق من المستخدم!');
+              console.log(data);
+            }
+          })
+          .catch((err) => {
+            console.error('خطأ أثناء تسجيل الدخول:', err);
+          });
+      };
 
-    // ✅ إدخال زر Telegram Widget في الصفحة ديناميكياً
-    const script = document.createElement('script');
-    script.src = 'https://telegram.org/js/telegram-widget.js?7';
-    script.async = true;
-    script.setAttribute('data-telegram-login', 'Tesmiapbot'); // <-- اسم البوت بدون @
-    script.setAttribute('data-size', 'large');
-    script.setAttribute('data-userpic', 'true');
-    script.setAttribute('data-lang', 'ar');
-    script.setAttribute('data-request-access', 'write');
-    script.setAttribute('data-on-auth', 'onTelegramAuth');
+      // إنشاء وإرفاق سكربت زر تسجيل الدخول الخاص بتيليجرام
+      const script = document.createElement('script');
+      script.src = 'https://telegram.org/js/telegram-widget.js?7';
+      script.async = true;
+      script.setAttribute('data-telegram-login', 'Tesmiapbot'); // اسم بوتك بدون @
+      script.setAttribute('data-size', 'large');
+      script.setAttribute('data-userpic', 'true');
+      script.setAttribute('data-lang', 'ar');
+      script.setAttribute('data-request-access', 'write');
+      script.setAttribute('data-on-auth', 'onTelegramAuth');
 
-    const container = document.getElementById('telegram-button-container');
-    if (container) {
-      container.innerHTML = '';
-      container.appendChild(script);
+      const container = document.getElementById('telegram-button-container');
+      if (container) {
+        container.innerHTML = '';
+        container.appendChild(script);
+      }
     }
   }, []);
 
@@ -104,7 +113,14 @@ export default function LoginPage() {
               <p className="text-sm text-gray-400 mb-3">
                 قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
               </p>
-              <div id="telegram-button-container" className="flex justify-center" />
+
+              {isInsideTelegram ? (
+                <p className="text-green-400 text-center font-semibold">
+                  ✅ تم تسجيل الدخول تلقائياً عبر تطبيق تيليجرام.
+                </p>
+              ) : (
+                <div id="telegram-button-container" className="flex justify-center" />
+              )}
             </div>
 
             <div className="border-t border-gray-700 pt-6">
