@@ -1,11 +1,40 @@
 "use client";
+import { useEffect } from 'react';
 
 import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
 
+  
+
+
+
 export default function LoginPage() {
+  useEffect(() => {
+    window.onTelegramAuth = function (user) {
+      // إرسال بيانات المستخدم إلى API
+      fetch('/api/auth/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.ok) {
+            alert('✅ تم تسجيل الدخول بنجاح!');
+            // يمكنك إعادة التوجيه لصفحة الحساب مثلاً
+            // window.location.href = '/dashboard';
+          } else {
+            alert('❌ فشل التحقق من المستخدم!');
+            console.log(data);
+          }
+        })
+        .catch((err) => {
+          console.error('خطأ أثناء تسجيل الدخول:', err);
+        });
+    };
+  }, []);
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -31,10 +60,18 @@ export default function LoginPage() {
               <p className="text-sm text-gray-400 mb-3">
                 قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
               </p>
-              <Link href="/api/auth/telegram" className="primary-button w-full">
-                <FaTelegramPlane size={20} />
-                <span>تسجيل الدخول عبر تيليجرام</span>
-              </Link>
+               <div className="flex justify-center items-center h-screen">
+                <script
+                  async
+                  src="https://telegram.org/js/telegram-widget.js?7"
+                  data-telegram-login="SmartCoinBot" // <-- غيّر هذا لاسم البوت بدون @
+                  data-size="large"
+                  data-userpic="true"
+                  data-lang="ar"
+                  data-request-access="write"
+                  data-on-auth="onTelegramAuth"
+                ></script>
+              </div>
             </div>
             
             <div className="border-t border-gray-700 pt-6">
