@@ -1,11 +1,51 @@
-"use client";
+'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
 
+declare global {
+  interface Window {
+    Telegram: any;
+  }
+}
+
 export default function LoginPage() {
+  const router = useRouter();
+
+  const handleTelegramLogin = async () => {
+    const tgUser = window?.Telegram?.WebApp?.initDataUnsafe?.user;
+    if (!tgUser) {
+      alert('⚠️ لا يمكن الحصول على بيانات المستخدم من Telegram. تأكد أنك داخل التطبيق.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tgUser),
+      });
+
+      if (res.redirected) {
+        router.push(res.url);
+      } else {
+        const data = await res.json();
+        if (data.ok) {
+          alert('✅ تم تسجيل الدخول بنجاح!');
+        } else {
+          alert('❌ فشل التحقق من المستخدم!');
+        }
+      }
+    } catch (err) {
+      console.error('❌ فشل في إرسال الطلب:', err);
+      alert('حدث خطأ أثناء إرسال البيانات إلى الخادم.');
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -19,7 +59,9 @@ export default function LoginPage() {
           />
           <h1 className="text-3xl font-bold gold-text">Smart Coin</h1>
           <p className="text-gray-400 mt-2">منصة التعدين الذكية</p>
-          <p className="text-gray-300 mt-4 text-sm max-w-sm mx-auto">نحن فخورون بالإعلان عن استثمارات بقيمة 350 مليون دولار لدعم رؤيتنا. نسعى لنصبح منصة لا مركزية رائدة لتداول العملات المشفرة، وستكون عملتنا الرقمية جزءًا أساسيًا من نظام الدفع داخل المنصة.</p>
+          <p className="text-gray-300 mt-4 text-sm max-w-sm mx-auto">
+            نحن فخورون بالإعلان عن استثمارات بقيمة 350 مليون دولار لدعم رؤيتنا. نسعى لنصبح منصة لا مركزية رائدة لتداول العملات المشفرة، وستكون عملتنا الرقمية جزءًا أساسيًا من نظام الدفع داخل المنصة.
+          </p>
         </div>
 
         <div className="card mb-6">
@@ -29,12 +71,12 @@ export default function LoginPage() {
             <div>
               <h3 className="text-lg mb-2">تسجيل الدخول عبر تيليجرام</h3>
               <p className="text-sm text-gray-400 mb-3">
-                قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
+                قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك من داخل التطبيق.
               </p>
-              <Link href="/api/auth/telegram" className="primary-button w-full">
+              <button onClick={handleTelegramLogin} className="primary-button w-full">
                 <FaTelegramPlane size={20} />
                 <span>تسجيل الدخول عبر تيليجرام</span>
-              </Link>
+              </button>
             </div>
             
             <div className="border-t border-gray-700 pt-6">
@@ -59,4 +101,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
