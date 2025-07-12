@@ -5,11 +5,11 @@ import { FaTelegramPlane } from "react-icons/fa";
 import { SiTon } from "react-icons/si";
 import Image from "next/image";
 import Link from "next/link";
-// ⬅️ ✅ تعريف Telegram على Window
+
 declare global {
   interface Window {
-    Telegram: {
-      WebApp: {
+    Telegram?: {
+      WebApp?: {
         initData: string;
         initDataUnsafe: {
           user?: {
@@ -28,49 +28,39 @@ declare global {
     };
   }
 }
+
 export default function LoginPage() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-  console.log("📱 User Agent:", navigator.userAgent);
+    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
+      console.log("✅ Telegram WebApp موجود");
+      window.Telegram.WebApp.ready();
 
-  if (typeof window !== 'undefined') {
-    const tg = window.Telegram;
+      const initData = window.Telegram.WebApp.initDataUnsafe;
 
-    if (tg && tg.WebApp) {
-      console.log('✅ WebApp مكتشف:', tg.WebApp);
-      tg.WebApp.ready();
+      if (initData?.user) {
+        console.log("✅ تم التعرف على المستخدم:", initData.user);
+        setUser(initData.user);
 
-      if (tg.WebApp.initDataUnsafe?.user) {
-        const user = tg.WebApp.initDataUnsafe.user;
-        const initData = tg.WebApp.initDataUnsafe;
-
-        console.log('✅ تم الحصول على بيانات المستخدم:', user);
-        setUser(user);
-
-        fetch('/api/auth/telegram', {
-          method: 'POST',
+        fetch("/api/auth/telegram", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            id: user.id,
-            username: user.username,
-            first_name: user.first_name,
-            photo_url: user.photo_url,
+            ...initData.user,
             auth_date: initData.auth_date,
             hash: initData.hash,
           }),
         });
       } else {
-        console.warn('❌ WebApp موجود لكن لا يوجد بيانات مستخدم.');
+        console.warn("❌ لا يوجد بيانات مستخدم من Telegram WebApp.");
       }
     } else {
-      console.warn('❌ WebApp غير متوفر. تأكد من فتح الصفحة من تيليجرام.');
+      console.warn("❌ Telegram WebApp غير موجود.");
     }
-  }
-}, []);
-
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -85,21 +75,13 @@ export default function LoginPage() {
           />
           <h1 className="text-3xl font-bold gold-text">Smart Coin</h1>
           <p className="text-gray-400 mt-2">منصة التعدين الذكية</p>
-          <p className="text-gray-300 mt-4 text-sm max-w-sm mx-auto">
-            نحن فخورون بالإعلان عن استثمارات بقيمة 350 مليون دولار لدعم رؤيتنا. نسعى لنصبح منصة لا مركزية رائدة لتداول العملات المشفرة، وستكون عملتنا الرقمية جزءًا أساسيًا من نظام الدفع داخل المنصة.
-          </p>
         </div>
 
         <div className="card mb-6">
-          <h2 className="text-xl font-bold mb-4 text-center">اختر طريقة تسجيل الدخول المفضلة لديك</h2>
-
+          <h2 className="text-xl font-bold mb-4 text-center">اختر طريقة تسجيل الدخول</h2>
           <div className="space-y-6">
             <div>
               <h3 className="text-lg mb-2">تسجيل الدخول عبر تيليجرام</h3>
-              <p className="text-sm text-gray-400 mb-3">
-                قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
-              </p>
-
               {user ? (
                 <div className="flex flex-col items-center text-white">
                   <img src={user.photo_url} alt="User" className="w-20 h-20 rounded-full mb-2" />
@@ -107,15 +89,12 @@ export default function LoginPage() {
                   <p className="text-sm text-gray-400">@{user.username}</p>
                 </div>
               ) : (
-                <p className="text-gray-400 text-center">جاري التحقق من حساب تيليجرام...</p>
+                <p className="text-center text-gray-400">جاري التحقق من حساب تيليجرام...</p>
               )}
             </div>
 
             <div className="border-t border-gray-700 pt-6">
               <h3 className="text-lg mb-2">تسجيل الدخول عبر محفظة TON</h3>
-              <p className="text-sm text-gray-400 mb-3">
-                قم بتسجيل الدخول باستخدام محفظة TON الخاصة بك. سيتم التحقق من هويتك عبر توقيع رسالة بمحفظتك.
-              </p>
               <button className="secondary-button w-full">
                 <SiTon size={20} />
                 <span>تسجيل الدخول عبر محفظة TON</span>
