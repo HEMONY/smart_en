@@ -58,7 +58,6 @@ export async function POST(request) {
     // Let's adjust to handle GET request and query parameters
     const url = new URL(request.url);
     const queryParams = Object.fromEntries(url.searchParams.entries());
-     console.error('user data:', queryParams);
 
     // التحقق من صحة البيانات
     if (!verifyTelegramData(queryParams)) {
