@@ -32,6 +32,12 @@ export default function LoginPage() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+      console.log('✅ WebApp مكتشف:', window.Telegram.WebApp);
+      window.Telegram.WebApp.ready();
+    } else {
+      console.warn('❌ لا يوجد Telegram WebApp. تأكد من فتح الرابط من تيليجرام.');
+    }
     console.log("🌐 التحقق من Telegram WebApp:", window.Telegram?.WebApp);
     if (typeof window !== "undefined" && window.Telegram?.WebApp?.initDataUnsafe?.user) {
       const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
