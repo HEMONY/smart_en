@@ -3,6 +3,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+export const dynamic = 'force-dynamic'; // إضافة هذه السطر
 
 // القيم الثابتة (يجب تغييرها لقيمك الفعلية)
 const TELEGRAM_BOT_TOKEN = '8002470444:AAHKFlbocuKZNxmr2sWYGfyycWNInh7spcA';
