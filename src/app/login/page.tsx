@@ -1,57 +1,98 @@
 'use client';
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import Link from 'next/link';
 import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
 
-  const verifyAuthData = async (data: any) => {
+  const handleTelegramLogin = () => {
+    setIsLoading(true);
+    setError('');
+
+    const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || 'Tesmiapbot'; // غيّر هنا إلى اسم بوتك (مثلاً: smartcoin_bot)
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+
+    // إعداد خيارات المصادقة
+    const authOptions = {
+      bot_id: botId,
+      request_access: true,
+      lang: 'ar',
+      return_to: `${currentOrigin}/api/auth/telegram/callback`
+    };
+
+    // فتح نافذة المصادقة
+    if (window.Telegram?.Login?.auth) {
+      window.Telegram.Login.auth(authOptions, (userData) => {
+        if (!userData) {
+          setError('تم إلغاء عملية التسجيل');
+          setIsLoading(false);
+          return;
+        }
+        // التحقق من البيانات
+        verifyAuthData(userData);
+      });
+    } else {
+      setError('Telegram Login غير متاح. تأكد أنك داخل تيليجرام.');
+      setIsLoading(false);
+    }
+  };
+
+  const verifyAuthData = async (data) => {
     try {
-      const res = await fetch('/api/auth/telegram', {
+      const response = await fetch('/api/auth/telegram', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(data)
       });
 
-      if (res.ok) {
+      if (response.ok) {
         router.push('/dashboard');
       } else {
         throw new Error('فشل التحقق من البيانات');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError('حدث خطأ أثناء المصادقة: ' + err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // تحميل سكربت Telegram Widget وعرض زر تسجيل دخول التيليجرام تلقائياً
   useEffect(() => {
-  const script = document.createElement('script');
-  script.src = 'https://telegram.org/js/telegram-widget.js?22';
-  script.async = true;
-  script.setAttribute('data-telegram-login', 'smartcoin_bot'); // ← غيّرها لاسم بوتك
-  script.setAttribute('data-size', 'large');
-  script.setAttribute('data-onauth', 'onTelegramAuth(user)');
-  script.setAttribute('data-request-access', 'write');
-  document.getElementById('telegram-button')?.appendChild(script);
+    const botLoginName = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'Tesmiapbot'; // غيّر هنا أيضاً
 
-  (window as any).onTelegramAuth = (userData: any) => {
-    console.log('✅ بيانات Telegram:', userData);
-    verifyAuthData(userData);
-  };
+    // دالة استقبال بيانات المستخدم من زر Telegram Login
+    (window as any).onTelegramAuth = (user) => {
+      console.log('تم تسجيل الدخول من Telegram Widget:', user);
+      verifyAuthData(user);
+      setIsLoading(true);
+    };
 
-  return () => {
+    const script = document.createElement('script');
+    script.src = 'https://telegram.org/js/telegram-widget.js?22';
+    script.async = true;
+    script.setAttribute('data-telegram-login', botLoginName);
+    script.setAttribute('data-size', 'large');
+    script.setAttribute('data-userpic', 'false');
+    script.setAttribute('data-auth-url', ''); // نتركها فارغة لأننا نتعامل يدويًا مع onTelegramAuth
+    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+    script.setAttribute('data-request-access', 'write');
+
     const container = document.getElementById('telegram-button');
-    if (container) container.innerHTML = '';
-  };
-}, []);
+    if (container) container.appendChild(script);
 
+    return () => {
+      if (container) container.innerHTML = '';
+    };
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-900 text-white">
@@ -93,7 +134,23 @@ export default function LoginPage() {
               <p className="text-sm text-gray-400 mb-3">
                 سجل دخولك بضغطة واحدة باستخدام حساب تيليجرام
               </p>
-              <div id="telegram-button" className="flex justify-center" />
+              {/* زر تسجيل الدخول من Telegram Widget */}
+              <div id="telegram-button" className="flex justify-center"></div>
+
+              <button
+                onClick={handleTelegramLogin}
+                disabled={isLoading}
+                className="mt-4 flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg w-full transition-colors disabled:opacity-70"
+              >
+                {isLoading ? (
+                  <span>جاري التحقق...</span>
+                ) : (
+                  <>
+                    <FaTelegramPlane size={20} />
+                    <span>المتابعة مع تيليجرام (يدوي)</span>
+                  </>
+                )}
+              </button>
             </div>
 
             <div className="border-t border-gray-700 pt-6">
@@ -103,7 +160,7 @@ export default function LoginPage() {
               </p>
               <button
                 className="flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg w-full transition-colors"
-                onClick={() => alert('🚧 سيتم تفعيل هذه الميزة قريباً')}
+                onClick={() => alert('سيتم تفعيل هذه الميزة قريباً')}
               >
                 <SiTon size={20} />
                 <span>الاتصال بالمحفظة</span>
@@ -113,16 +170,7 @@ export default function LoginPage() {
         </div>
 
         <div className="text-center text-sm text-gray-400">
-          <p>
-            باستمرارك، أنت توافق على{' '}
-            <Link href="/terms" className="text-yellow-400 hover:underline">
-              الشروط
-            </Link>{' '}
-            و{' '}
-            <Link href="/privacy" className="text-yellow-400 hover:underline">
-              الخصوصية
-            </Link>
-          </p>
+          <p>باستمرارك، أنت توافق على <Link href="/terms" className="text-yellow-400 hover:underline">الشروط</Link> و <Link href="/privacy" className="text-yellow-400 hover:underline">الخصوصية</Link></p>
         </div>
       </div>
     </div>
