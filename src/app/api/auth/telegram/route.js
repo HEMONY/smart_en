@@ -35,74 +35,62 @@ function parseInitData(initDataRaw) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const initDataRaw = body.initData;
 
-    if (!initDataRaw || !verifyInitData(initDataRaw)) {
-      console.warn('Telegram WebApp initData verification failed.');
-      return NextResponse.redirect(new URL('/login?error=invalid_telegram_data', request.url), 302);
+    const initData = body?.initData;
+    if (!initData) {
+      console.warn('initData is missing from request.');
+      return NextResponse.json({ ok: false, error: 'Missing initData' }, { status: 400 });
     }
 
-    const telegramUser = parseInitData(initDataRaw);
-    if (!telegramUser || !telegramUser.id) {
-      console.error('Missing Telegram user data.');
-      return NextResponse.redirect(new URL('/login?error=missing_user_data', request.url), 302);
+    const params = Object.fromEntries(new URLSearchParams(initData).entries());
+
+    if (!verifyTelegramData(params)) {
+      console.warn('Telegram data verification failed.');
+      return NextResponse.json({ ok: false, error: 'Telegram auth failed' }, { status: 403 });
     }
 
-    // تحقق من وجود المستخدم
+    const telegramUserData = JSON.parse(params.user || '{}');
+
+    // --- البحث عن المستخدم أو إنشاءه في Supabase ---
     let { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('telegram_id', telegramUser.id)
+      .eq('telegram_id', telegramUserData.id)
       .single();
 
-    // إذا لم يوجد، أنشئ مستخدم جديد
     if (error && error.code === 'PGRST116') {
       const walletAddress = generateWalletAddress();
-      const { data: newUser, error: insertErr } = await supabase
+      const { data: newUser, error: createError } = await supabase
         .from('users')
         .insert([
           {
-            telegram_id: telegramUser.id,
-            username: telegramUser.username || `user${telegramUser.id}`,
+            telegram_id: telegramUserData.id,
+            username: telegramUserData.username || `user${telegramUserData.id}`,
             wallet_address: walletAddress,
-            first_name: telegramUser.first_name || '',
-            last_name: telegramUser.last_name || '',
-            photo_url: telegramUser.photo_url || ''
+            first_name: telegramUserData.first_name,
+            last_name: telegramUserData.last_name,
+            photo_url: telegramUserData.photo_url
           }
         ])
         .select()
         .single();
 
-      if (insertErr) {
-        console.error('Insert error:', insertErr);
-        return NextResponse.redirect(new URL('/login?error=insert_failed', request.url), 302);
+      if (createError) {
+        console.error('Supabase insert error:', createError);
+        return NextResponse.json({ ok: false, error: 'User creation failed' }, { status: 500 });
       }
 
       user = newUser;
-    } else if (error) {
-      console.error('Select error:', error);
-      return NextResponse.redirect(new URL('/login?error=db_error', request.url), 302);
-    } else {
-      // تحديث بيانات موجودة
-      const updates = {};
-      if (telegramUser.username && telegramUser.username !== user.username) updates.username = telegramUser.username;
-      if (telegramUser.first_name && telegramUser.first_name !== user.first_name) updates.first_name = telegramUser.first_name;
-      if (telegramUser.last_name && telegramUser.last_name !== user.last_name) updates.last_name = telegramUser.last_name;
-      if (telegramUser.photo_url && telegramUser.photo_url !== user.photo_url) updates.photo_url = telegramUser.photo_url;
-
-      if (Object.keys(updates).length > 0) {
-        await supabase.from('users').update(updates).eq('id', user.id);
-      }
     }
 
-    // ✅ إعادة التوجيه إلى لوحة التحكم
-    return NextResponse.redirect(new URL('/dashboard', request.url), 302);
+    return NextResponse.json({ ok: true, user });
 
   } catch (error) {
-    console.error('Unhandled error:', error);
-    return NextResponse.redirect(new URL('/login?error=server_error', request.url), 302);
+    console.error('Server error:', error);
+    return NextResponse.json({ ok: false, error: 'Server error' }, { status: 500 });
   }
 }
+
 
 // WebApp لا يستخدم GET فعليًا ولكن نحافظ عليها للمرونة
 export async function GET(request) {
