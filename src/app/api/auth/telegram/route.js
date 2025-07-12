@@ -3,8 +3,11 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { parse } from 'querystring';
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_KEY || ''
+);
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 
 function verifyTelegramInitData(initDataRaw: string) {
   const params = parse(initDataRaw);
