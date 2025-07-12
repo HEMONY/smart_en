@@ -17,7 +17,8 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const tgUser = window?.Telegram?.WebApp?.initDataUnsafe?.user;
+    const initData = window?.Telegram?.WebApp?.initData;
+
 
     if (tgUser) {
       // تم الدخول من داخل WebApp
