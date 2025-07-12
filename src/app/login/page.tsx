@@ -32,6 +32,7 @@ export default function LoginPage() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
+    console.log("🌐 التحقق من Telegram WebApp:", window.Telegram?.WebApp);
     if (typeof window !== "undefined" && window.Telegram?.WebApp?.initDataUnsafe?.user) {
       const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
       const tgInitData = window.Telegram.WebApp.initDataUnsafe;
