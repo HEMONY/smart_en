@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
@@ -15,30 +15,40 @@ declare global {
 
 export default function LoginPage() {
   const router = useRouter();
+  const [isInsideTelegram, setIsInsideTelegram] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Check if we're inside Telegram WebApp
     const initData = window?.Telegram?.WebApp?.initData;
-
     if (initData) {
+      setIsInsideTelegram(true);
+      setLoading(true);
+
+      // إرسال initData للسيرفر للتحقق
       fetch('/api/auth/telegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData }), // إرسال initData كـ JSON
+        body: JSON.stringify({ initData }),
       })
         .then(async (res) => {
-          if (res.redirected) {
-            window.location.href = res.url;
+          if (!res.ok) {
+            alert('فشل التحقق من المستخدم!');
+            setLoading(false);
+            return;
+          }
+
+          const data = await res.json();
+          if (data.ok) {
+            router.push('/dashboard');
           } else {
-            const data = await res.json();
-            if (data.ok) {
-              router.push('/dashboard');
-            } else {
-              alert('❌ فشل التحقق من المستخدم!');
-            }
+            alert('فشل في المصادقة');
+            setLoading(false);
           }
         })
         .catch((err) => {
-          console.error('❌ خطأ أثناء الاتصال بالخادم:', err);
+          console.error('خطأ أثناء الاتصال بالخادم:', err);
+          setLoading(false);
         });
     }
   }, []);
@@ -68,15 +78,22 @@ export default function LoginPage() {
             <div>
               <h3 className="text-lg mb-2">تسجيل الدخول عبر تيليجرام</h3>
               <p className="text-sm text-gray-400 mb-3">
-                إذا كنت تستخدم التطبيق من داخل تيليجرام، سيتم تسجيل الدخول تلقائيًا.
+                {isInsideTelegram
+                  ? 'إذا كنت داخل تطبيق تيليجرام، سيتم تسجيل الدخول تلقائيًا.'
+                  : 'قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك من خلال الزر أدناه.'}
               </p>
-              <button
-                className="primary-button w-full opacity-50 cursor-not-allowed"
-                disabled
-              >
-                <FaTelegramPlane size={20} />
-                <span>جاري تسجيل الدخول عبر تيليجرام...</span>
-              </button>
+
+              {isInsideTelegram ? (
+                <button className="primary-button w-full opacity-50 cursor-not-allowed" disabled>
+                  <FaTelegramPlane size={20} />
+                  <span>جاري تسجيل الدخول عبر تيليجرام...</span>
+                </button>
+              ) : (
+                <Link href="/api/auth/telegram" className="primary-button w-full">
+                  <FaTelegramPlane size={20} />
+                  <span>تسجيل الدخول عبر تيليجرام</span>
+                </Link>
+              )}
             </div>
 
             <div className="border-t border-gray-700 pt-6">
