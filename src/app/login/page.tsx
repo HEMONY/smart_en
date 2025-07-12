@@ -4,13 +4,14 @@ import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, Suspense } from 'react';
+import { useEffect, Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 // مكون محتوى الصفحة الداخلي
 function LoginContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (error) {
@@ -33,13 +34,50 @@ function LoginContent() {
 
       alert(errorMessage);
     }
+
+    // Check for Telegram auth callback
+    if (typeof window !== 'undefined' && window.location.hash.includes('tgAuthResult')) {
+      handleTelegramCallback();
+    }
   }, [error]);
 
-  // إنشاء رابط المصادقة عبر Telegram
-  const getTelegramAuthUrl = () => {
+  const handleTelegramCallback = async () => {
+    setIsLoading(true);
+    try {
+      const authData = new URLSearchParams(window.location.hash.substring(1)).get('tgAuthResult');
+      
+      if (!authData) {
+        throw new Error('No auth data found');
+      }
+
+      const response = await fetch('/api/auth/telegram', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ authData: JSON.parse(decodeURIComponent(authData)) }),
+      });
+
+      if (response.ok) {
+        window.location.href = '/dashboard';
+      } else {
+        throw new Error('Authentication failed');
+      }
+    } catch (err) {
+      console.error('Telegram auth error:', err);
+      window.location.href = '/login?error=telegram_auth_failed';
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTelegramLogin = () => {
     const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || '8002470444:AAHKFlbocuKZNxmr2sWYGfyycWNInh7spcA';
     const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
-    return `https://oauth.telegram.org/auth?bot_id=${botId}&origin=${encodeURIComponent(currentOrigin)}&embed=1&request_access=write&return_to=${encodeURIComponent(`${currentOrigin}/api/auth/telegram`)}`;
+    
+    const telegramAuthUrl = `https://oauth.telegram.org/auth?bot_id=${botId}&origin=${encodeURIComponent(currentOrigin)}&embed=1&request_access=write&return_to=${encodeURIComponent(`${currentOrigin}/login#tgAuthResult=`)}`;
+    
+    window.open(telegramAuthUrl, '_self');
   };
 
   return (
@@ -77,13 +115,20 @@ function LoginContent() {
               <p className="text-sm text-gray-400 mb-3">
                 قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
               </p>
-              <Link 
-                href={getTelegramAuthUrl()}
-                className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg w-full transition-colors"
+              <button
+                onClick={handleTelegramLogin}
+                disabled={isLoading}
+                className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg w-full transition-colors disabled:opacity-70"
               >
-                <FaTelegramPlane size={20} />
-                <span>تسجيل الدخول عبر تيليجرام</span>
-              </Link>
+                {isLoading ? (
+                  <span>جاري المصادقة...</span>
+                ) : (
+                  <>
+                    <FaTelegramPlane size={20} />
+                    <span>تسجيل الدخول عبر تيليجرام</span>
+                  </>
+                )}
+              </button>
             </div>
             
             <div className="border-t border-gray-700 pt-6">
