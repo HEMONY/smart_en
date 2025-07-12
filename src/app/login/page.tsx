@@ -15,7 +15,7 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
     
-    const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || '8002470444';
+    const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || '7620357455';
     const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
     
     // إعداد خيارات المصادقة
