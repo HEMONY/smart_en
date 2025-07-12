@@ -15,31 +15,42 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 // التحقق من صحة بيانات تيليغرام
 // Reference: https://core.telegram.org/widgets/login#checking-authorization
 function verifyTelegramData(data) {
-  if (!data) {
-    console.error("❌ لا توجد بيانات للتحقق.");
+  if (!TELEGRAM_BOT_TOKEN) {
+    console.error('Telegram Bot Token is not configured!');
+    return false; // Fail verification if token is missing
+  }
+
+  const receivedHash = data.hash;
+  if (!receivedHash) {
     return false;
   }
 
-  const { user_id, auth_code, auth_date } = data;
+  const dataCheckString = Object.keys(data)
+    .filter((key) => key !== 'hash')
+    .sort()
+    .map((key) => `${key}=${data[key]}`)
+    .join('\n');
 
-  if (!user_id || !auth_code || !auth_date) {
-    console.warn("❌ البيانات غير مكتملة (user_id أو auth_code أو auth_date مفقودة)");
+  try {
+    const secretKey = crypto.createHash('sha256').update(TELEGRAM_BOT_TOKEN).digest();
+    const calculatedHash = crypto.createHmac('sha256', secretKey)
+      .update(dataCheckString)
+      .digest('hex');
+
+    // Check if data is outdated (e.g., older than 1 day)
+    const authDate = parseInt(data.auth_date, 10);
+    const now = Math.floor(Date.now() / 1000);
+    if (now - authDate > 86400) { // 86400 seconds = 1 day
+        console.warn("Telegram data is outdated.");
+        return false;
+    }
+
+    return calculatedHash === receivedHash;
+  } catch (error) {
+    console.error('Error verifying Telegram data:', error);
     return false;
   }
-
-  // ⏱️ تحقق اختياري من أن البيانات ليست قديمة (أكثر من 24 ساعة مثلاً)
-  const now = Math.floor(Date.now() / 1000);
-  const authTime = parseInt(auth_date, 10);
-
-  if (isNaN(authTime) || now - authTime > 86400) {
-    console.warn("⚠️ البيانات قديمة أو auth_date غير صالح.");
-    return false;
-  }
-
-  // ✅ نجاح التحقق بدون استخدام hash
-  return true;
 }
-
 export async function POST(request) {
   try {
     // The Telegram widget sends data via query parameters on GET request, not POST body
