@@ -3,96 +3,53 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { parse } from 'querystring';
 
-// إعداد Supabase
-const supabase = createClient(
-  'https://xsxbeihsavosrxjyzmga.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzeGJlaWhzYXZvc3J4anl6bWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjI2ODEsImV4cCI6MjA2NzEzODY4MX0.79iTU8QrexMFSrg_CesL_vOSwQ0TWxq3iN8TsVDWE-o'
-);
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
 
-// متغيرات بيئة
-const TELEGRAM_BOT_TOKEN = '8002470444:AAHKFlbocuKZNxmr2sWYGfyycWNInh7spcA';
-
-function verifyTelegramInitData(initDataRaw) {
-  const parsed = parse(initDataRaw);
-  const hash = parsed.hash;
-
-  const dataCheckString = Object.keys(parsed)
-    .filter(key => key !== 'hash')
+function verifyTelegramInitData(initDataRaw: string) {
+  const params = parse(initDataRaw);
+  const hash = params.hash as string;
+  const dataCheckString = Object.keys(params)
+    .filter(k => k !== 'hash')
     .sort()
-    .map(key => `${key}=${parsed[key]}`)
+    .map(k => `${k}=${params[k]}`)
     .join('\n');
-
-  const secretKey = crypto.createHash('sha256').update(TELEGRAM_BOT_TOKEN).digest();
-  const hmac = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
-
-  // التحقق من التوقيت
-  const authDate = parseInt(parsed.auth_date, 10);
-  const now = Math.floor(Date.now() / 1000);
-  if (now - authDate > 86400) return false;
-
-  return hmac === hash ? parsed : false;
+  const secret = crypto.createHash('sha256').update(TELEGRAM_BOT_TOKEN).digest();
+  const hmac = crypto.createHmac('sha256', secret).update(dataCheckString).digest('hex');
+  const authDate = parseInt(params.auth_date as string, 10);
+  if (Math.floor(Date.now()/1000) - authDate > 86400) return null;
+  return hmac === hash ? params : null;
 }
 
-export async function POST(req) {
-  try {
-    const { initData } = await req.json();
-    if (!initData) {
-      return NextResponse.json({ ok: false, error: 'initData missing' }, { status: 400 });
-    }
+export async function POST(request: Request) {
+  const { initData } = await request.json().catch(() => ({}));
+  if (!initData) return NextResponse.json({ ok: false, error: 'initData missing' }, { status:400 });
+  const verified = verifyTelegramInitData(initData);
+  if (!verified || !verified.id) return NextResponse.json({ ok: false, error: 'Invalid initData' }, { status:403 });
+  const id = Number(verified.id);
 
-    const userData = verifyTelegramInitData(initData);
-    if (!userData || !userData.id) {
-      return NextResponse.json({ ok: false, error: 'Invalid initData' }, { status: 403 });
-    }
+  // تسجيل مستخدم جديد أو البحث عنه
+  const { data: existing, error: selErr } = await supabase
+    .from('users').select('*').eq('telegram_id', id).single();
 
-    // التحقق من وجود المستخدم أو إنشاءه
-    let { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('telegram_id', userData.id)
-      .single();
-
-    if (error && error.code === 'PGRST116') {
-      const newUser = {
-        telegram_id: userData.id,
-        username: userData.username || `user${userData.id}`,
-        first_name: userData.first_name || '',
-        last_name: userData.last_name || '',
-        photo_url: userData.photo_url || '',
-        wallet_address: generateWalletAddress()
-      };
-
-      const { data: createdUser, error: insertError } = await supabase
-        .from('users')
-        .insert([newUser])
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error('Insert Error:', insertError);
-        return NextResponse.json({ ok: false, error: 'DB insert failed' }, { status: 500 });
-      }
-
-      user = createdUser;
-    }
-
-    return NextResponse.json({ ok: true, user });
-  } catch (err) {
-    console.error('Server Error:', err);
-    return NextResponse.json({ ok: false, error: 'Server Error' }, { status: 500 });
+  let user = existing;
+  if (selErr && selErr.code === 'PGRST116') {
+    const newUser = {
+      telegram_id: id,
+      username: verified.username as string || `user${id}`,
+      first_name: verified.first_name as string || '',
+      last_name: verified.last_name as string || '',
+      photo_url: verified.photo_url as string || '',
+      wallet_address: 'EQC'+crypto.randomBytes(32).toString('hex'),
+    };
+    const { data: created, error: insErr } = await supabase.from('users').insert([newUser]).select().single();
+    if (insErr) console.error(insErr);
+    user = created;
   }
+
+  return NextResponse.json({ ok: true, user });
 }
 
-export async function GET(req) {
-  // توجيه المستخدم إذا حاول تسجيل الدخول عبر المتصفح
-  return NextResponse.redirect(new URL('/login?error=use_webapp_post', req.url));
-}
-
-function generateWalletAddress() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = 'EQC';
-  for (let i = 0; i < 45; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+export async function GET(request: Request) {
+  return NextResponse.redirect(new URL('/login?error=use_webapp_post', request.url));
 }
