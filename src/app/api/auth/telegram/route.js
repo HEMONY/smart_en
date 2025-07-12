@@ -1,103 +1,93 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import querystring from 'querystring';
+import { parse } from 'querystring';
 
+// إعداد Supabase
+const supabase = createClient(
+  'https://xsxbeihsavosrxjyzmga.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzeGJlaWhzYXZvc3J4anl6bWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjI2ODEsImV4cCI6MjA2NzEzODY4MX0.79iTU8QrexMFSrg_CesL_vOSwQ0TWxq3iN8TsVDWE-o'
+);
+
+// متغيرات بيئة
 const TELEGRAM_BOT_TOKEN = '8002470444:AAHKFlbocuKZNxmr2sWYGfyycWNInh7spcA';
 
-const supabaseUrl = 'https://xsxbeihsavosrxjyzmga.supabase.co';
-const supabaseServiceKey ='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzeGJlaWhzYXZvc3J4anl6bWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjI2ODEsImV4cCI6MjA2NzEzODY4MX0.79iTU8QrexMFSrg_CesL_vOSwQ0TWxq3iN8TsVDWE-o'; // ← استخدم المفتاح الكامل كما فعلت
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+function verifyTelegramInitData(initDataRaw) {
+  const parsed = parse(initDataRaw);
+  const hash = parsed.hash;
 
-// ✅ التحقق من initData من Telegram WebApp
-function verifyInitData(initDataRaw) {
-  try {
-    const [dataPart, hash] = initDataRaw.split('&hash=');
-    const secretKey = crypto.createHash('sha256').update(TELEGRAM_BOT_TOKEN).digest();
-    const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataPart).digest('hex');
+  const dataCheckString = Object.keys(parsed)
+    .filter(key => key !== 'hash')
+    .sort()
+    .map(key => `${key}=${parsed[key]}`)
+    .join('\n');
 
-    return calculatedHash === hash;
-  } catch (err) {
-    console.error('Error verifying initData:', err);
-    return false;
-  }
+  const secretKey = crypto.createHash('sha256').update(TELEGRAM_BOT_TOKEN).digest();
+  const hmac = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+  // التحقق من التوقيت
+  const authDate = parseInt(parsed.auth_date, 10);
+  const now = Math.floor(Date.now() / 1000);
+  if (now - authDate > 86400) return false;
+
+  return hmac === hash ? parsed : false;
 }
 
-// ✅ استخراج بيانات المستخدم من initData
-function parseInitData(initDataRaw) {
-  const [dataPart] = initDataRaw.split('&hash=');
-  const parsed = querystring.parse(dataPart);
-  const user = parsed.user ? JSON.parse(parsed.user) : null;
-  return user;
-}
-
-// ✅ POST = استقبال initData من WebApp
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const body = await request.json();
-
-    const initData = body?.initData;
+    const { initData } = await req.json();
     if (!initData) {
-      console.warn('initData is missing from request.');
-      return NextResponse.json({ ok: false, error: 'Missing initData' }, { status: 400 });
+      return NextResponse.json({ ok: false, error: 'initData missing' }, { status: 400 });
     }
 
-    const params = Object.fromEntries(new URLSearchParams(initData).entries());
-
-    if (!verifyTelegramData(params)) {
-      console.warn('Telegram data verification failed.');
-      return NextResponse.json({ ok: false, error: 'Telegram auth failed' }, { status: 403 });
+    const userData = verifyTelegramInitData(initData);
+    if (!userData || !userData.id) {
+      return NextResponse.json({ ok: false, error: 'Invalid initData' }, { status: 403 });
     }
 
-    const telegramUserData = JSON.parse(params.user || '{}');
-
-    // --- البحث عن المستخدم أو إنشاءه في Supabase ---
+    // التحقق من وجود المستخدم أو إنشاءه
     let { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('telegram_id', telegramUserData.id)
+      .eq('telegram_id', userData.id)
       .single();
 
     if (error && error.code === 'PGRST116') {
-      const walletAddress = generateWalletAddress();
-      const { data: newUser, error: createError } = await supabase
+      const newUser = {
+        telegram_id: userData.id,
+        username: userData.username || `user${userData.id}`,
+        first_name: userData.first_name || '',
+        last_name: userData.last_name || '',
+        photo_url: userData.photo_url || '',
+        wallet_address: generateWalletAddress()
+      };
+
+      const { data: createdUser, error: insertError } = await supabase
         .from('users')
-        .insert([
-          {
-            telegram_id: telegramUserData.id,
-            username: telegramUserData.username || `user${telegramUserData.id}`,
-            wallet_address: walletAddress,
-            first_name: telegramUserData.first_name,
-            last_name: telegramUserData.last_name,
-            photo_url: telegramUserData.photo_url
-          }
-        ])
+        .insert([newUser])
         .select()
         .single();
 
-      if (createError) {
-        console.error('Supabase insert error:', createError);
-        return NextResponse.json({ ok: false, error: 'User creation failed' }, { status: 500 });
+      if (insertError) {
+        console.error('Insert Error:', insertError);
+        return NextResponse.json({ ok: false, error: 'DB insert failed' }, { status: 500 });
       }
 
-      user = newUser;
+      user = createdUser;
     }
 
     return NextResponse.json({ ok: true, user });
-
-  } catch (error) {
-    console.error('Server error:', error);
-    return NextResponse.json({ ok: false, error: 'Server error' }, { status: 500 });
+  } catch (err) {
+    console.error('Server Error:', err);
+    return NextResponse.json({ ok: false, error: 'Server Error' }, { status: 500 });
   }
 }
 
-
-// WebApp لا يستخدم GET فعليًا ولكن نحافظ عليها للمرونة
-export async function GET(request) {
-  return NextResponse.redirect(new URL('/login?error=use_webapp_post', request.url), 302);
+export async function GET(req) {
+  // توجيه المستخدم إذا حاول تسجيل الدخول عبر المتصفح
+  return NextResponse.redirect(new URL('/login?error=use_webapp_post', req.url));
 }
 
-// توليد عنوان محفظة عشوائي
 function generateWalletAddress() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = 'EQC';
