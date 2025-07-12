@@ -15,7 +15,7 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
-    const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || 'Tesmiapbot'; // غيّر هنا إلى اسم بوتك (مثلاً: smartcoin_bot)
+    const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || 'Tesmiapbot'; // غيّر هنا إلى اسم بوتك الصحيح
     const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
 
     // إعداد خيارات المصادقة
@@ -23,10 +23,10 @@ export default function LoginPage() {
       bot_id: botId,
       request_access: true,
       lang: 'ar',
-      return_to: `${currentOrigin}/api/auth/telegram/callback`
+      return_to: `${currentOrigin}/api/auth/telegram/callback`,
     };
 
-    // فتح نافذة المصادقة
+    // فتح نافذة المصادقة (اليدوي)
     if (window.Telegram?.Login?.auth) {
       window.Telegram.Login.auth(authOptions, (userData) => {
         if (!userData) {
@@ -38,7 +38,7 @@ export default function LoginPage() {
         verifyAuthData(userData);
       });
     } else {
-      setError('Telegram Login غير متاح. تأكد أنك داخل تيليجرام.');
+      setError('Telegram Login غير متاح. تأكد أنك داخل تطبيق تيليجرام.');
       setIsLoading(false);
     }
   };
@@ -50,7 +50,7 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
 
       if (response.ok) {
@@ -65,15 +65,14 @@ export default function LoginPage() {
     }
   };
 
-  // تحميل سكربت Telegram Widget وعرض زر تسجيل دخول التيليجرام تلقائياً
   useEffect(() => {
-    const botLoginName = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'Tesmiapbot'; // غيّر هنا أيضاً
+    const botLoginName = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'Tesmiapbot'; // غيّر هنا إلى اسم بوتك بدون @
 
-    // دالة استقبال بيانات المستخدم من زر Telegram Login
+    // دالة استقبال بيانات المستخدم من زر Telegram Login widget
     (window as any).onTelegramAuth = (user) => {
       console.log('تم تسجيل الدخول من Telegram Widget:', user);
-      verifyAuthData(user);
       setIsLoading(true);
+      verifyAuthData(user);
     };
 
     const script = document.createElement('script');
@@ -82,7 +81,7 @@ export default function LoginPage() {
     script.setAttribute('data-telegram-login', botLoginName);
     script.setAttribute('data-size', 'large');
     script.setAttribute('data-userpic', 'false');
-    script.setAttribute('data-auth-url', ''); // نتركها فارغة لأننا نتعامل يدويًا مع onTelegramAuth
+    script.setAttribute('data-auth-url', ''); // تركها فارغة لأننا نتعامل مع onTelegramAuth
     script.setAttribute('data-onauth', 'onTelegramAuth(user)');
     script.setAttribute('data-request-access', 'write');
 
@@ -100,10 +99,7 @@ export default function LoginPage() {
         {error && (
           <div className="mb-4 p-3 bg-red-500/20 text-red-300 rounded-lg text-center">
             {error}
-            <button
-              onClick={() => setError('')}
-              className="mr-2 text-sm underline"
-            >
+            <button onClick={() => setError('')} className="mr-2 text-sm underline">
               إغلاق
             </button>
           </div>
@@ -170,7 +166,16 @@ export default function LoginPage() {
         </div>
 
         <div className="text-center text-sm text-gray-400">
-          <p>باستمرارك، أنت توافق على <Link href="/terms" className="text-yellow-400 hover:underline">الشروط</Link> و <Link href="/privacy" className="text-yellow-400 hover:underline">الخصوصية</Link></p>
+          <p>
+            باستمرارك، أنت توافق على{' '}
+            <Link href="/terms" className="text-yellow-400 hover:underline">
+              الشروط
+            </Link>{' '}
+            و{' '}
+            <Link href="/privacy" className="text-yellow-400 hover:underline">
+              الخصوصية
+            </Link>
+          </p>
         </div>
       </div>
     </div>
