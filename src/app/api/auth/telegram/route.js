@@ -15,7 +15,8 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 // التحقق من صحة بيانات تيليغرام
 // Reference: https://core.telegram.org/widgets/login#checking-authorization
 function verifyTelegramData(data) {
-  if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === '8002470444:AAHKFlbocuKZNxmr2sWYGfyycWNInh7spcA') {
+  if (!TELEGRAM_BOT_TOKEN) {
+
     console.error('Telegram Bot Token is not configured!');
     return false; // Fail verification if token is missing
   }
