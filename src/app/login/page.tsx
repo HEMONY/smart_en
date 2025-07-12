@@ -5,7 +5,29 @@ import { FaTelegramPlane } from "react-icons/fa";
 import { SiTon } from "react-icons/si";
 import Image from "next/image";
 import Link from "next/link";
-
+// ⬅️ ✅ تعريف Telegram على Window
+declare global {
+  interface Window {
+    Telegram: {
+      WebApp: {
+        initData: string;
+        initDataUnsafe: {
+          user?: {
+            id: number;
+            first_name: string;
+            last_name?: string;
+            username?: string;
+            photo_url?: string;
+            language_code?: string;
+          };
+          auth_date: string;
+          hash: string;
+        };
+        ready: () => void;
+      };
+    };
+  }
+}
 export default function LoginPage() {
   const [user, setUser] = useState(null);
 
