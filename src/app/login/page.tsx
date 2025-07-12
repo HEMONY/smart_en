@@ -1,91 +1,28 @@
 'use client';
-import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const router = useRouter();
-
-  const handleTelegramLogin = () => {
-    setIsLoading(true);
-    setError('');
-
-    const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || 'Tesmiapbot'; // غيّر هنا إلى اسم بوتك الصحيح
-    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
-
-    // إعداد خيارات المصادقة
-    const authOptions = {
-      bot_id: botId,
-      request_access: true,
-      lang: 'ar',
-      return_to: `${currentOrigin}/api/auth/telegram/callback`,
-    };
-
-    // فتح نافذة المصادقة (اليدوي)
-    if (window.Telegram?.Login?.auth) {
-      window.Telegram.Login.auth(authOptions, (userData) => {
-        if (!userData) {
-          setError('تم إلغاء عملية التسجيل');
-          setIsLoading(false);
-          return;
-        }
-        // التحقق من البيانات
-        verifyAuthData(userData);
-      });
-    } else {
-      setError('Telegram Login غير متاح. تأكد أنك داخل تطبيق تيليجرام.');
-      setIsLoading(false);
-    }
-  };
-
-  const verifyAuthData = async (data) => {
-    try {
-      const response = await fetch('/api/auth/telegram', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        router.push('/dashboard');
-      } else {
-        throw new Error('فشل التحقق من البيانات');
-      }
-    } catch (err) {
-      setError('حدث خطأ أثناء المصادقة: ' + err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   useEffect(() => {
-    const botLoginName = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'Tesmiapbot'; // غيّر هنا إلى اسم بوتك بدون @
+    const botLoginName = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'Tesmiapbot'; // بدون @
 
-    // دالة استقبال بيانات المستخدم من زر Telegram Login widget
-    (window as any).onTelegramAuth = (user) => {
-      console.log('تم تسجيل الدخول من Telegram Widget:', user);
-      setIsLoading(true);
-      verifyAuthData(user);
-    };
+    const container = document.getElementById('telegram-button');
+    if (container) container.innerHTML = '';
 
     const script = document.createElement('script');
     script.src = 'https://telegram.org/js/telegram-widget.js?22';
     script.async = true;
     script.setAttribute('data-telegram-login', botLoginName);
     script.setAttribute('data-size', 'large');
-    script.setAttribute('data-userpic', 'false');
-    script.setAttribute('data-auth-url', ''); // تركها فارغة لأننا نتعامل مع onTelegramAuth
-    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+    script.setAttribute('data-userpic', 'true');
     script.setAttribute('data-request-access', 'write');
+    script.setAttribute('data-auth-url', `${window.location.origin}/api/auth/telegram/callback`);
+    script.setAttribute('data-radius', '10');
 
-    const container = document.getElementById('telegram-button');
     if (container) container.appendChild(script);
 
     return () => {
@@ -132,21 +69,6 @@ export default function LoginPage() {
               </p>
               {/* زر تسجيل الدخول من Telegram Widget */}
               <div id="telegram-button" className="flex justify-center"></div>
-
-              <button
-                onClick={handleTelegramLogin}
-                disabled={isLoading}
-                className="mt-4 flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg w-full transition-colors disabled:opacity-70"
-              >
-                {isLoading ? (
-                  <span>جاري التحقق...</span>
-                ) : (
-                  <>
-                    <FaTelegramPlane size={20} />
-                    <span>المتابعة مع تيليجرام (يدوي)</span>
-                  </>
-                )}
-              </button>
             </div>
 
             <div className="border-t border-gray-700 pt-6">
