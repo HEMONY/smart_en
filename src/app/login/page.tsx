@@ -5,88 +5,100 @@ import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, Suspense, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 // مكون محتوى الصفحة الداخلي
 function LoginContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const error = searchParams.get('error');
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // تحميل بيانات Telegram Widget بشكل ديناميكي
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://telegram.org/js/telegram-widget.js?22';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   useEffect(() => {
     if (error) {
-      let errorMessage = 'حدث خطأ أثناء المصادقة';
+      setErrorMessage(getErrorMessage(error));
+    }
+
+    // معالجة callback من Telegram
+    const handleAuthCallback = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const authData = urlParams.get('auth_data');
       
-      switch(error) {
-        case 'telegram_auth_failed':
-          errorMessage = 'فشل التحقق من بيانات تيليجرام';
-          break;
-        case 'user_creation_failed':
-          errorMessage = 'فشل إنشاء حساب جديد';
-          break;
-        case 'database_error':
-          errorMessage = 'خطأ في قاعدة البيانات';
-          break;
-        case 'server_error':
-          errorMessage = 'خطأ في الخادم';
-          break;
+      if (authData) {
+        setIsLoading(true);
+        try {
+          const response = await fetch('/api/auth/telegram', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: authData,
+          });
+
+          if (!response.ok) {
+            throw new Error('فشل التحقق من البيانات');
+          }
+
+          router.push('/dashboard');
+        } catch (err) {
+          setErrorMessage('فشل عملية التسجيل. يرجى المحاولة مرة أخرى.');
+          console.error('Authentication error:', err);
+        } finally {
+          setIsLoading(false);
+          // تنظيف URL بعد المعالجة
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
       }
+    };
 
-      alert(errorMessage);
-    }
-
-    // Check for Telegram auth callback
-    if (typeof window !== 'undefined' && window.location.hash.includes('tgAuthResult')) {
-      handleTelegramCallback();
-    }
-  }, [error]);
-
-  const handleTelegramCallback = async () => {
-    setIsLoading(true);
-    try {
-      const authData = new URLSearchParams(window.location.hash.substring(1)).get('tgAuthResult');
-      
-      if (!authData) {
-        throw new Error('No auth data found');
-      }
-
-      const response = await fetch('/api/auth/telegram', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ authData: JSON.parse(decodeURIComponent(authData)) }),
-      });
-
-      if (response.ok) {
-        window.location.href = '/dashboard';
-      } else {
-        throw new Error('Authentication failed');
-      }
-    } catch (err) {
-      console.error('Telegram auth error:', err);
-      window.location.href = '/login?error=telegram_auth_failed';
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    handleAuthCallback();
+  }, [error, router]);
 
   const handleTelegramLogin = () => {
+    setIsLoading(true);
     const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || '8002470444:AAHKFlbocuKZNxmr2sWYGfyycWNInh7spcA';
-    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
-    
-    const telegramAuthUrl = `https://oauth.telegram.org/auth?bot_id=${botId}&origin=${encodeURIComponent(currentOrigin)}&embed=1&request_access=write&return_to=${encodeURIComponent(`${currentOrigin}/login#tgAuthResult=`)}`;
-    
-    window.open(telegramAuthUrl, '_self');
+    const currentOrigin = window.location.origin;
+    const redirectUrl = `${currentOrigin}/login`;
+
+    window.Telegram.Login.auth(
+      { bot_id: botId, request_access: true },
+      (data) => {
+        if (data) {
+          window.location.href = `${redirectUrl}?auth_data=${encodeURIComponent(JSON.stringify(data))}`;
+        } else {
+          setIsLoading(false);
+          setErrorMessage('تم إلغاء عملية التسجيل');
+        }
+      }
+    );
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background-black text-white">
       <div className="w-full max-w-md">
-        {/* رسالة الخطأ */}
-        {error && (
-          <div className="mb-4 p-3 bg-red-500/20 text-red-300 rounded-lg text-center">
-            {getErrorMessage(error)}
+        {/* عرض رسائل الخطأ */}
+        {errorMessage && (
+          <div className="mb-4 p-3 bg-red-500/20 text-red-300 rounded-lg text-center animate-fade-in">
+            {errorMessage}
+            <button 
+              onClick={() => setErrorMessage('')}
+              className="mr-2 text-sm underline"
+            >
+              إغلاق
+            </button>
           </div>
         )}
 
@@ -102,30 +114,33 @@ function LoginContent() {
           <h1 className="text-3xl font-bold gold-text">Smart Coin</h1>
           <p className="text-gray-400 mt-2">منصة التعدين الذكية</p>
           <p className="text-gray-300 mt-4 text-sm max-w-sm mx-auto">
-            نحن فخورون بالإعلان عن استثمارات بقيمة 350 مليون دولار لدعم رؤيتنا. نسعى لنصبح منصة لا مركزية رائدة لتداول العملات المشفرة، وستكون عملتنا الرقمية جزءًا أساسيًا من نظام الدفع داخل المنصة.
+            نحن فخورون بالإعلان عن استثمارات بقيمة 350 مليون دولار لدعم رؤيتنا.
           </p>
         </div>
 
         <div className="bg-gray-900 rounded-xl p-6 shadow-lg mb-6">
-          <h2 className="text-xl font-bold mb-4 text-center">اختر طريقة تسجيل الدخول المفضلة لديك</h2>
+          <h2 className="text-xl font-bold mb-4 text-center">اختر طريقة تسجيل الدخول</h2>
           
           <div className="space-y-6">
             <div>
               <h3 className="text-lg mb-2">تسجيل الدخول عبر تيليجرام</h3>
               <p className="text-sm text-gray-400 mb-3">
-                قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
+                سجل الدخول باستخدام حسابك في تيليجرام بضغطة واحدة
               </p>
               <button
                 onClick={handleTelegramLogin}
                 disabled={isLoading}
-                className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg w-full transition-colors disabled:opacity-70"
+                className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg w-full transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
-                  <span>جاري المصادقة...</span>
+                  <span className="flex items-center">
+                    <span className="ml-2">جاري التحقق...</span>
+                    <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  </span>
                 ) : (
                   <>
                     <FaTelegramPlane size={20} />
-                    <span>تسجيل الدخول عبر تيليجرام</span>
+                    <span>المتابعة مع تيليجرام</span>
                   </>
                 )}
               </button>
@@ -134,26 +149,23 @@ function LoginContent() {
             <div className="border-t border-gray-700 pt-6">
               <h3 className="text-lg mb-2">تسجيل الدخول عبر محفظة TON</h3>
               <p className="text-sm text-gray-400 mb-3">
-                قم بتسجيل الدخول باستخدام محفظة TON الخاصة بك. سيتم التحقق من هويتك عبر توقيع رسالة بمحفظتك.
+                اتصل بمحفظتك الخارجية لتسجيل الدخول
               </p>
               <button 
                 className="flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg w-full transition-colors"
-                onClick={() => alert('سيتم تنفيذ مصادقة TON هنا')}
+                onClick={() => {
+                  setErrorMessage('تسجيل الدخول عبر TON غير متاح حالياً');
+                }}
               >
                 <SiTon size={20} />
-                <span>تسجيل الدخول عبر محفظة TON</span>
+                <span>الاتصال بالمحفظة</span>
               </button>
             </div>
           </div>
         </div>
         
-        <div className="text-center">
-          <p className="text-sm text-gray-400">
-            بالتسجيل، أنت توافق على {' '}
-            <Link href="/terms" className="text-primary-gold hover:underline">شروط الاستخدام</Link> {' '}
-            و {' '}
-            <Link href="/privacy" className="text-primary-gold hover:underline">سياسة الخصوصية</Link>
-          </p>
+        <div className="text-center text-sm text-gray-400">
+          <p>باستمرارك، أنت توافق على <Link href="/terms" className="text-primary-gold hover:underline">الشروط</Link> و <Link href="/privacy" className="text-primary-gold hover:underline">الخصوصية</Link></p>
         </div>
       </div>
     </div>
@@ -162,23 +174,29 @@ function LoginContent() {
 
 // دالة مساعدة لعرض رسائل الخطأ
 function getErrorMessage(error: string | null): string {
-  if (!error) return '';
-  
   const messages: Record<string, string> = {
-    'telegram_auth_failed': 'فشل التحقق من بيانات تيليجرام. يرجى المحاولة مرة أخرى.',
-    'user_creation_failed': 'فشل إنشاء حساب جديد. يرجى التواصل مع الدعم الفني.',
-    'database_error': 'حدث خطأ في قاعدة البيانات. يرجى المحاولة لاحقاً.',
-    'server_error': 'حدث خطأ في الخادم. يرجى المحاولة لاحقاً.',
-    'default': 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'
+    'telegram_auth_failed': 'تعذر التحقق من بيانات تيليجرام. يرجى التأكد من اتصالك بالإنترنت والمحاولة مرة أخرى.',
+    'user_creation_failed': 'حدث خطأ أثناء إنشاء الحساب. يرجى التواصل مع الدعم.',
+    'database_error': 'الخدمة غير متاحة حاليًا. نعمل على حل المشكلة.',
+    'server_error': 'خطأ في الخادم. يرجى المحاولة لاحقاً.',
+    'default': 'حدث خطأ غير متوقع. نعتذر عن الإزعاج.'
   };
 
-  return messages[error] || messages['default'];
+  return error ? messages[error] || messages['default'] : '';
 }
 
-// المكون الرئيسي للصفحة مع Suspense Boundary
+// المكون الرئيسي للصفحة
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">جاري التحميل...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="w-24 h-24 bg-gray-700 rounded-full mb-4"></div>
+          <div className="h-6 bg-gray-700 rounded w-3/4 mb-2"></div>
+          <div className="h-4 bg-gray-700 rounded w-1/2"></div>
+        </div>
+      </div>
+    }>
       <LoginContent />
     </Suspense>
   );
