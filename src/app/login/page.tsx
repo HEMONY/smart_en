@@ -32,25 +32,26 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://telegram.org/js/telegram-widget.js?22';
-    script.async = true;
-    script.setAttribute('data-telegram-login', 'Tesmiapbot'); // ⬅️ غيّرها لاسم بوتك بدون @
-    script.setAttribute('data-size', 'large');
-    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
-    script.setAttribute('data-request-access', 'write');
-    document.getElementById('telegram-button')?.appendChild(script);
+  const script = document.createElement('script');
+  script.src = 'https://telegram.org/js/telegram-widget.js?22';
+  script.async = true;
+  script.setAttribute('data-telegram-login', 'smartcoin_bot'); // ← غيّرها لاسم بوتك
+  script.setAttribute('data-size', 'large');
+  script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+  script.setAttribute('data-request-access', 'write');
+  document.getElementById('telegram-button')?.appendChild(script);
 
-    // دالة الاستجابة
-    (window as any).onTelegramAuth = (userData: any) => {
-      console.log('✅ بيانات Telegram:', userData);
-      verifyAuthData(userData);
-    };
+  (window as any).onTelegramAuth = (userData: any) => {
+    console.log('✅ بيانات Telegram:', userData);
+    verifyAuthData(userData);
+  };
 
-    return () => {
-      document.getElementById('telegram-button')?.innerHTML = '';
-    };
-  }, []);
+  return () => {
+    const container = document.getElementById('telegram-button');
+    if (container) container.innerHTML = '';
+  };
+}, []);
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-900 text-white">
