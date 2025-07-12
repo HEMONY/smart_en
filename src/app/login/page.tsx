@@ -1,34 +1,22 @@
-'use client';
-import { useEffect } from 'react';
+useEffect(() => {
+  const botUsername = 'Tesmiapbot'; // بدون @
+  const container = document.getElementById('telegram-button');
 
-export default function LoginPage() {
-  useEffect(() => {
-    const container = document.getElementById('telegram-login-container');
-    if (!container) return;
-    container.innerHTML = '';
-
+  if (container) {
+    container.innerHTML = ''; // Clear previous content
     const script = document.createElement('script');
     script.src = 'https://telegram.org/js/telegram-widget.js?22';
-    script.async = true;
-    script.setAttribute('data-telegram-login', 'Tesmiapbot'); // بدون @
+    script.setAttribute('data-telegram-login', botUsername);
     script.setAttribute('data-size', 'large');
-    script.setAttribute('data-userpic', 'true');
+    script.setAttribute('data-userpic', 'false');
     script.setAttribute('data-request-access', 'write');
-    script.setAttribute('data-auth-url', 'https://smart-en.vercel.app/api/auth/telegram/callback');
+    script.setAttribute('data-userpic', 'false');
+    script.setAttribute('data-auth-url', 'https://smart-en.vercel.app/api/auth/telegram/callback'); // هذا مهم جداً
+    script.async = true;
     container.appendChild(script);
+  }
 
-    return () => {
-      container.innerHTML = '';
-    };
-  }, []);
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-6">
-      <div className="w-full max-w-md text-center">
-        <h1 className="text-3xl font-bold text-yellow-400 mb-4">Smart Coin</h1>
-        <p className="text-gray-400 mb-6">سجّل الدخول باستخدام تيليجرام</p>
-        <div id="telegram-login-container" />
-      </div>
-    </div>
-  );
-}
+  return () => {
+    if (container) container.innerHTML = '';
+  };
+}, []);
