@@ -63,16 +63,28 @@ export default function LoginPage() {
 
   // تحميل سكربت Telegram عند تركيب المكون
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://telegram.org/js/telegram-widget.js?22';
-    script.async = true;
-    script.onload = () => console.log('Telegram Widget loaded');
-    document.body.appendChild(script);
+  const script = document.createElement('script');
+  script.src = 'https://telegram.org/js/telegram-widget.js?22';
+  script.setAttribute('data-telegram-login', 'اسم_البوت_بدون@'); // مثال: smartcoin_bot
+  script.setAttribute('data-size', 'large');
+  script.setAttribute('data-userpic', 'false');
+  script.setAttribute('data-request-access', 'write');
+  script.setAttribute('data-userpic', 'true');
+  script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+  script.async = true;
+  document.getElementById('telegram-login')?.appendChild(script);
 
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
+  // تعريف الدالة في window
+  (window as any).onTelegramAuth = (user: any) => {
+    console.log("✅ بيانات المستخدم من Telegram:", user);
+    verifyAuthData(user); // ⬅️ أرسل البيانات إلى السيرفر
+  };
+
+  return () => {
+    document.getElementById('telegram-login')?.innerHTML = '';
+  };
+}, []);
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-900 text-white">
@@ -114,20 +126,8 @@ export default function LoginPage() {
               <p className="text-sm text-gray-400 mb-3">
                 سجل دخولك بضغطة واحدة باستخدام حساب تيليجرام
               </p>
-              <button
-                onClick={handleTelegramLogin}
-                disabled={isLoading}
-                className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg w-full transition-colors disabled:opacity-70"
-              >
-                {isLoading ? (
-                  <span>جاري التحقق...</span>
-                ) : (
-                  <>
-                    <FaTelegramPlane size={20} />
-                    <span>المتابعة مع تيليجرام</span>
-                  </>
-                )}
-              </button>
+              <div id="telegram-login" className="flex justify-center"></div>
+
             </div>
             
             <div className="border-t border-gray-700 pt-6">
