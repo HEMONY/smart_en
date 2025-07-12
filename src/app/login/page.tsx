@@ -13,7 +13,7 @@ export default function LoginPage() {
   const handleTelegramLogin = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/telegram");
+      const res = await fetch("/app/api/auth/telegram/route.js");
       const data = await res.json(); // إذا كانت الاستجابة JSON
       setResponseData(data);
     } catch (error) {
