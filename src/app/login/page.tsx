@@ -35,6 +35,7 @@ export default function LoginPage() {
     if (typeof window !== "undefined" && window.Telegram?.WebApp?.initDataUnsafe?.user) {
       const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
       const tgInitData = window.Telegram.WebApp.initDataUnsafe;
+      console.log("✅ تم الحصول على بيانات المستخدم من تيليجرام:", tgUser);
 
       setUser(tgUser);
 
@@ -53,7 +54,9 @@ export default function LoginPage() {
           hash: tgInitData.hash,
         }),
       });
-    }
+    }else {
+    console.warn("❌ لا يوجد بيانات من Telegram. تأكد أنك فتحت الموقع من WebApp.");
+  }
   }, []);
 
   return (
