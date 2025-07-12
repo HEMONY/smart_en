@@ -32,6 +32,8 @@ export default function LoginPage() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
+  console.log("📱 User Agent:", navigator.userAgent);
+
   if (typeof window !== 'undefined') {
     const tg = window.Telegram;
 
