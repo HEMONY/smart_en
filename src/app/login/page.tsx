@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -17,19 +17,17 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const tgUser = window?.Telegram?.WebApp?.initData;
+    const initData = window?.Telegram?.WebApp?.initData;
 
-
-    if (tgUser) {
-      // تم الدخول من داخل WebApp
+    if (initData) {
       fetch('/api/auth/telegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(tgUser),
+        body: JSON.stringify({ initData }), // إرسال initData كـ JSON
       })
         .then(async (res) => {
           if (res.redirected) {
-            router.push(res.url);
+            window.location.href = res.url;
           } else {
             const data = await res.json();
             if (data.ok) {
@@ -70,12 +68,15 @@ export default function LoginPage() {
             <div>
               <h3 className="text-lg mb-2">تسجيل الدخول عبر تيليجرام</h3>
               <p className="text-sm text-gray-400 mb-3">
-                قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
+                إذا كنت تستخدم التطبيق من داخل تيليجرام، سيتم تسجيل الدخول تلقائيًا.
               </p>
-              <Link href="/api/auth/telegram" className="primary-button w-full">
+              <button
+                className="primary-button w-full opacity-50 cursor-not-allowed"
+                disabled
+              >
                 <FaTelegramPlane size={20} />
-                <span>تسجيل الدخول عبر تيليجرام</span>
-              </Link>
+                <span>جاري تسجيل الدخول عبر تيليجرام...</span>
+              </button>
             </div>
 
             <div className="border-t border-gray-700 pt-6">
