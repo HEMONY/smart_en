@@ -4,17 +4,15 @@ import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/navigation';
 
-export default function LoginPage() {
+// مكون محتوى الصفحة الداخلي
+function LoginContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
-  const router = useRouter();
 
   useEffect(() => {
-    // عرض رسائل الخطأ إذا وجدت
     if (error) {
       let errorMessage = 'حدث خطأ أثناء المصادقة';
       
@@ -39,7 +37,7 @@ export default function LoginPage() {
 
   // إنشاء رابط المصادقة عبر Telegram
   const getTelegramAuthUrl = () => {
-    const botId = '8002470444:AAHKFlbocuKZNxmr2sWYGfyycWNInh7spcA';
+    const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || '8002470444:AAHKFlbocuKZNxmr2sWYGfyycWNInh7spcA';
     const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
     return `https://oauth.telegram.org/auth?bot_id=${botId}&origin=${encodeURIComponent(currentOrigin)}&embed=1&request_access=write&return_to=${encodeURIComponent(`${currentOrigin}/api/auth/telegram`)}`;
   };
@@ -47,7 +45,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background-black text-white">
       <div className="w-full max-w-md">
-        {/* رسالة الخطأ (يمكن استبدالها ب modal أو عنصر واجهة أفضل) */}
+        {/* رسالة الخطأ */}
         {error && (
           <div className="mb-4 p-3 bg-red-500/20 text-red-300 rounded-lg text-center">
             {getErrorMessage(error)}
@@ -130,4 +128,13 @@ function getErrorMessage(error: string | null): string {
   };
 
   return messages[error] || messages['default'];
+}
+
+// المكون الرئيسي للصفحة مع Suspense Boundary
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">جاري التحميل...</div>}>
+      <LoginContent />
+    </Suspense>
+  );
 }
