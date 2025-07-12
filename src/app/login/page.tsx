@@ -15,76 +15,78 @@ function LoginContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // تحميل بيانات Telegram Widget بشكل ديناميكي
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://telegram.org/js/telegram-widget.js?22';
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
+    // تحميل سكربت Telegram Widget بشكل ديناميكي
+    const loadTelegramScript = () => {
+      const script = document.createElement('script');
+      script.src = 'https://telegram.org/js/telegram-widget.js?22';
+      script.async = true;
+      script.onload = () => {
+        console.log('Telegram Widget script loaded');
+      };
+      document.body.appendChild(script);
     };
+
+    loadTelegramScript();
   }, []);
 
   useEffect(() => {
     if (error) {
       setErrorMessage(getErrorMessage(error));
     }
-
-    // معالجة callback من Telegram
-    const handleAuthCallback = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const authData = urlParams.get('auth_data');
-      
-      if (authData) {
-        setIsLoading(true);
-        try {
-          const response = await fetch('/api/auth/telegram', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: authData,
-          });
-
-          if (!response.ok) {
-            throw new Error('فشل التحقق من البيانات');
-          }
-
-          router.push('/dashboard');
-        } catch (err) {
-          setErrorMessage('فشل عملية التسجيل. يرجى المحاولة مرة أخرى.');
-          console.error('Authentication error:', err);
-        } finally {
-          setIsLoading(false);
-          // تنظيف URL بعد المعالجة
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
-      }
-    };
-
-    handleAuthCallback();
-  }, [error, router]);
+  }, [error]);
 
   const handleTelegramLogin = () => {
+    if (!window.Telegram) {
+      setErrorMessage('جارٍ تحميل خدمة Telegram... يرجى المحاولة مرة أخرى بعد ثانية');
+      return;
+    }
+
     setIsLoading(true);
     const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || '8002470444:AAHKFlbocuKZNxmr2sWYGfyycWNInh7spcA';
-    const currentOrigin = window.location.origin;
-    const redirectUrl = `${currentOrigin}/login`;
-
-    window.Telegram.Login.auth(
-      { bot_id: botId, request_access: true },
-      (data) => {
-        if (data) {
-          window.location.href = `${redirectUrl}?auth_data=${encodeURIComponent(JSON.stringify(data))}`;
-        } else {
-          setIsLoading(false);
-          setErrorMessage('تم إلغاء عملية التسجيل');
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+    
+    try {
+      window.Telegram.Login.auth(
+        { bot_id: botId, request_access: true },
+        (data) => {
+          if (data) {
+            handleTelegramCallback(data);
+          } else {
+            setIsLoading(false);
+            setErrorMessage('تم إلغاء عملية التسجيل');
+          }
         }
-      }
-    );
+      );
+    } catch (err) {
+      setIsLoading(false);
+      setErrorMessage('حدث خطأ أثناء الاتصال بخدمة Telegram');
+      console.error('Telegram auth error:', err);
+    }
   };
+
+  const handleTelegramCallback = async (data: any) => {
+    try {
+      const response = await fetch('/api/auth/telegram', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        router.push('/dashboard');
+      } else {
+        throw new Error('Authentication failed');
+      }
+    } catch (err) {
+      setIsLoading(false);
+      setErrorMessage('فشل التحقق من البيانات. يرجى المحاولة مرة أخرى.');
+      console.error('Auth error:', err);
+    }
+  };
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background-black text-white">
