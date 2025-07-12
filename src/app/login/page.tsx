@@ -32,39 +32,43 @@ export default function LoginPage() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-      console.log('✅ WebApp مكتشف:', window.Telegram.WebApp);
-      window.Telegram.WebApp.ready();
+  if (typeof window !== 'undefined') {
+    const tg = window.Telegram;
+
+    if (tg && tg.WebApp) {
+      console.log('✅ WebApp مكتشف:', tg.WebApp);
+      tg.WebApp.ready();
+
+      if (tg.WebApp.initDataUnsafe?.user) {
+        const user = tg.WebApp.initDataUnsafe.user;
+        const initData = tg.WebApp.initDataUnsafe;
+
+        console.log('✅ تم الحصول على بيانات المستخدم:', user);
+        setUser(user);
+
+        fetch('/api/auth/telegram', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: user.id,
+            username: user.username,
+            first_name: user.first_name,
+            photo_url: user.photo_url,
+            auth_date: initData.auth_date,
+            hash: initData.hash,
+          }),
+        });
+      } else {
+        console.warn('❌ WebApp موجود لكن لا يوجد بيانات مستخدم.');
+      }
     } else {
-      console.warn('❌ لا يوجد Telegram WebApp. تأكد من فتح الرابط من تيليجرام.');
+      console.warn('❌ WebApp غير متوفر. تأكد من فتح الصفحة من تيليجرام.');
     }
-    console.log("🌐 التحقق من Telegram WebApp:", window.Telegram?.WebApp);
-    if (typeof window !== "undefined" && window.Telegram?.WebApp?.initDataUnsafe?.user) {
-      const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-      const tgInitData = window.Telegram.WebApp.initDataUnsafe;
-      console.log("✅ تم الحصول على بيانات المستخدم من تيليجرام:", tgUser);
-
-      setUser(tgUser);
-
-      // ⬇️ إرسال البيانات إلى API للتحقق
-      fetch("/api/auth/telegram", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: tgUser.id,
-          username: tgUser.username,
-          first_name: tgUser.first_name,
-          photo_url: tgUser.photo_url,
-          auth_date: tgInitData.auth_date,
-          hash: tgInitData.hash,
-        }),
-      });
-    }else {
-    console.warn("❌ لا يوجد بيانات من Telegram. تأكد أنك فتحت الموقع من WebApp.");
   }
-  }, []);
+}, []);
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
