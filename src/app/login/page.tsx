@@ -96,7 +96,6 @@ export default function LoginPage() {
         data-size="large"
         data-userpic="false"
         data-request-access="write"
-        data-userpic="false"
         data-onauth="handleTelegramAuth(user)"
         data-lang="ar"
       ></script>
