@@ -1,5 +1,4 @@
-'use client';
-
+التالي هوا كود الصفحة الكامل  اعطني الحل 'use client';
 import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
@@ -7,56 +6,71 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// تعريف الدالة عالمياً
-declare global {
-  interface Window {
-    onTelegramAuth: (user: any) => void;
-  }
-}
-
 export default function LoginPage() {
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    // تحميل سكربت تسجيل الدخول من تيليجرام
-    const script = document.createElement('script');
-    script.src = 'https://telegram.org/js/telegram-widget.js?22';
-    script.setAttribute('data-telegram-login', 'Tesmiapbot'); // اسم البوت بدون @
-    script.setAttribute('data-size', 'large');
-    script.setAttribute('data-userpic', 'false');
-    script.setAttribute('data-lang', 'ar');
-    script.setAttribute('data-request-access', 'write');
-    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
-    script.async = true;
-
-    document.getElementById('telegram-login-button')?.appendChild(script);
-
-    // تعريف الدالة عالمياً
-    window.onTelegramAuth = function (user) {
-      console.log("✅ تم تسجيل الدخول بنجاح:", user);
-
-      // إرسال البيانات إلى API
-      fetch('/api/auth/telegram', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(user),
-      })
-        .then((res) => {
-          if (res.ok) {
-            router.push('/dashboard'); // ✅ بعد تسجيل الدخول
-          } else {
-            setError('فشل التحقق من البيانات');
-          }
-        })
-        .catch((err) => {
-          setError('خطأ في الاتصال: ' + err.message);
-        });
+  const handleTelegramLogin = () => {
+    setIsLoading(true);
+    setError('');
+    
+    const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || '8002470444:AAHKFlbocuKZNxmr2sWYGfyycWNInh7spcA';
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+    
+    // إعداد خيارات المصادقة
+    const authOptions = {
+      bot_id: botId,
+      request_access: true,
+      lang: 'ar',
+      return_to: `${currentOrigin}/api/auth/telegram/callback`
     };
 
+    // فتح نافذة المصادقة
+    window.Telegram.Login.auth(authOptions, (userData) => {
+      if (!userData) {
+        setError('تم إلغاء عملية التسجيل');
+        setIsLoading(false);
+        return;
+      }
+
+      // التحقق من البيانات
+      verifyAuthData(userData);
+    });
+  };
+
+  const verifyAuthData = async (data) => {
+    try {
+      const response = await fetch('/api/auth/telegram', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (response.ok) {
+        router.push('/dashboard');
+      } else {
+        throw new Error('فشل التحقق من البيانات');
+      }
+    } catch (err) {
+      setError('حدث خطأ أثناء المصادقة: ' + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // تحميل سكربت Telegram عند تركيب المكون
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://telegram.org/js/telegram-widget.js?22';
+    script.async = true;
+    script.onload = () => console.log('Telegram Widget loaded');
+    document.body.appendChild(script);
+
     return () => {
-      const el = document.getElementById('telegram-login-button');
-      if (el) el.innerHTML = ''; // تنظيف
+      document.body.removeChild(script);
     };
   }, []);
 
@@ -66,16 +80,19 @@ export default function LoginPage() {
         {error && (
           <div className="mb-4 p-3 bg-red-500/20 text-red-300 rounded-lg text-center">
             {error}
-            <button onClick={() => setError('')} className="mr-2 text-sm underline">
+            <button 
+              onClick={() => setError('')}
+              className="mr-2 text-sm underline"
+            >
               إغلاق
             </button>
           </div>
         )}
 
         <div className="text-center mb-8">
-          <Image
-            src="/assets/smart-coin-logo.png"
-            alt="Smart Coin"
+          <Image 
+            src="/assets/smart-coin-logo.png" 
+            alt="Smart Coin" 
             width={120}
             height={120}
             className="mx-auto mb-4"
@@ -90,23 +107,35 @@ export default function LoginPage() {
 
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg mb-6">
           <h2 className="text-xl font-bold mb-4 text-center">اختر طريقة التسجيل</h2>
-
+          
           <div className="space-y-6">
             <div>
               <h3 className="text-lg mb-2">تسجيل الدخول عبر تيليجرام</h3>
               <p className="text-sm text-gray-400 mb-3">
                 سجل دخولك بضغطة واحدة باستخدام حساب تيليجرام
               </p>
-
-              <div id="telegram-login-button" className="flex justify-center" />
+              <button
+                onClick={handleTelegramLogin}
+                disabled={isLoading}
+                className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg w-full transition-colors disabled:opacity-70"
+              >
+                {isLoading ? (
+                  <span>جاري التحقق...</span>
+                ) : (
+                  <>
+                    <FaTelegramPlane size={20} />
+                    <span>المتابعة مع تيليجرام</span>
+                  </>
+                )}
+              </button>
             </div>
-
+            
             <div className="border-t border-gray-700 pt-6">
               <h3 className="text-lg mb-2">تسجيل الدخول عبر محفظة TON</h3>
               <p className="text-sm text-gray-400 mb-3">
                 اتصل بمحفظتك الخارجية لتسجيل الدخول
               </p>
-              <button
+              <button 
                 className="flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg w-full transition-colors"
                 onClick={() => alert('سيتم تفعيل هذه الميزة قريباً')}
               >
@@ -116,18 +145,9 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-
+        
         <div className="text-center text-sm text-gray-400">
-          <p>
-            باستمرارك، أنت توافق على{' '}
-            <Link href="/terms" className="text-yellow-400 hover:underline">
-              الشروط
-            </Link>{' '}
-            و{' '}
-            <Link href="/privacy" className="text-yellow-400 hover:underline">
-              الخصوصية
-            </Link>
-          </p>
+          <p>باستمرارك، أنت توافق على <Link href="/terms" className="text-yellow-400 hover:underline">الشروط</Link> و <Link href="/privacy" className="text-yellow-400 hover:underline">الخصوصية</Link></p>
         </div>
       </div>
     </div>
