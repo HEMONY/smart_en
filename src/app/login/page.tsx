@@ -24,29 +24,16 @@ export default function LoginPage() {
         setIsLoading(false);
         return;
       }
-      console.log('🔍 Query Params:', {
-        user_id: userData.id,
-        first_name: userData.first_name,
-        username: userData.username,
-        hash: userData.hash,
-      });
+
+      console.log('🔍 بيانات Telegram:', userData);
       verifyAuthData(userData);
     };
 
-    return () => {
-      window.onTelegramAuth = undefined;
-    };
-  }, []);
-
-  const handleTelegramLogin = () => {
-    setIsLoading(true);
-    setError('');
-    
     const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || 'Smamiapbot';
-    
-    // إنشاء زر Telegram Widget
+
+    // إضافة Telegram Login Widget للصفحة
     const script = document.createElement('script');
-    script.src = `https://telegram.org/js/telegram-widget.js?22`;
+    script.src = 'https://telegram.org/js/telegram-widget.js?22';
     script.async = true;
     script.setAttribute('data-telegram-login', botId);
     script.setAttribute('data-size', 'large');
@@ -54,28 +41,20 @@ export default function LoginPage() {
     script.setAttribute('data-request-access', 'write');
     script.setAttribute('data-userpic', 'false');
     script.setAttribute('data-lang', 'ar');
-    
-    // إضافة معالج حدث load مباشرة على عنصر السكربت
-    script.onload = () => {
-      // بعد تحميل السكربت، قم بإنشاء حدث النقر
-      const event = new MouseEvent('click', {
-        view: window,
-        bubbles: true,
-        cancelable: true
-      });
-      // إرسال الحدث إلى السكربت
-      script.dispatchEvent(event);
-    };
 
-    // إنشاء عنصر مؤقت وإضافة السكربت إليه
-    const tempDiv = document.createElement('div');
-    tempDiv.style.display = 'none';
-    tempDiv.id = 'telegram-login-container';
-    tempDiv.appendChild(script);
-    document.body.appendChild(tempDiv);
-  };
+    const container = document.getElementById('telegram-login-button');
+    if (container) {
+      container.innerHTML = ''; // تنظيف
+      container.appendChild(script);
+    }
+
+    return () => {
+      window.onTelegramAuth = undefined;
+    };
+  }, []);
 
   const verifyAuthData = async (data: any) => {
+    setIsLoading(true);
     try {
       const response = await fetch('/api/auth/telegram', {
         method: 'POST',
@@ -94,10 +73,6 @@ export default function LoginPage() {
       setError('حدث خطأ أثناء المصادقة: ' + (err as Error).message);
     } finally {
       setIsLoading(false);
-      const tempDiv = document.getElementById('telegram-login-container');
-      if (tempDiv) {
-        document.body.removeChild(tempDiv);
-      }
     }
   };
 
@@ -141,20 +116,12 @@ export default function LoginPage() {
               <p className="text-sm text-gray-400 mb-3">
                 سجل دخولك بضغطة واحدة باستخدام حساب تيليجرام
               </p>
-              <button
-                onClick={handleTelegramLogin}
-                disabled={isLoading}
-                className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg w-full transition-colors disabled:opacity-70"
-              >
-                {isLoading ? (
-                  <span>جاري التحقق...</span>
-                ) : (
-                  <>
-                    <FaTelegramPlane size={20} />
-                    <span>المتابعة مع تيليجرام</span>
-                  </>
-                )}
-              </button>
+
+              <div id="telegram-login-button" className="text-center" />
+
+              {isLoading && (
+                <p className="text-blue-400 mt-3">✅ جاري التحقق...</p>
+              )}
             </div>
             
             <div className="border-t border-gray-700 pt-6">
