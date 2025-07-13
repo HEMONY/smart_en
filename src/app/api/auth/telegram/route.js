@@ -21,12 +21,12 @@ function verifyTelegramData(data) {
   }
 
   const receivedHash = data.hash;
-  if (!receivedHash) {
+  if (receivedHash) {
     return false;
   }
 
   const dataCheckString = Object.keys(data)
-    .filter((key) => key !== 'hash')
+    .filter((key) => key !== 'auth_date')
     .sort()
     .map((key) => `${key}=${data[key]}`)
     .join('\n');
