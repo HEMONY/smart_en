@@ -15,23 +15,30 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 // التحقق من صحة بيانات تيليغرام
 // Reference: https://core.telegram.org/widgets/login#checking-authorization
 function verifyTelegramData(data) {
-  // تأكد من أن القيم الأساسية موجودة
+  // تأكد من وجود القيمتين
   if (!data || !data.user_id || !data.auth_code) {
     console.warn("Missing required fields.");
     return false;
   }
 
-  // تحقق من أن البيانات ليست قديمة (أكثر من يوم)
+  // تأكد أن auth_code هو رقم صحيح
   const authDate = parseInt(data.auth_code, 10);
-  const now = Math.floor(Date.now() / 1000);
-  if (now - authDate > 86400) {
-    console.warn("Telegram data is outdated.");
+  if (isNaN(authDate)) {
+    console.warn("Invalid auth_code.");
     return false;
   }
 
-  // تجاوز التحقق من قيمة hash تمامًا واعتمد فقط على auth_date و id
+  // تحقق من أن auth_code حديث (أقل من 24 ساعة)
+  const now = Math.floor(Date.now() / 1000);
+  if (now - authDate > 86400) {
+    console.warn("auth_code is outdated.");
+    return false;
+  }
+
+  // ✅ صالح بناءً على القيمتين فقط
   return true;
 }
+
 
 export async function POST(request) {
   try {
