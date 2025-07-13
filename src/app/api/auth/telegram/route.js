@@ -23,11 +23,12 @@ export async function POST(request) {
     const telegramUserData = queryParams;
 
     // 🟡 محاولة البحث عن المستخدم
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('telegram_id', telegramUserData.user_id)
-      .single();
+    let { data: user, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('telegram_id', telegramUserData.user_id)
+    .single();
+
 
     console.log('📦 نتيجة البحث في Supabase:', { user, error });
 
