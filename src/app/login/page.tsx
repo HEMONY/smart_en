@@ -11,32 +11,55 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
+  // هذه الدالة سيتم استدعاؤها من قبل ويدجت Telegram
+  window.onTelegramAuth = (userData) => {
+    if (!userData) {
+      setError('تم إلغاء عملية التسجيل');
+      setIsLoading(false);
+      return;
+    }
+
+    // التحقق من البيانات
+    verifyAuthData(userData);
+  };
+
   const handleTelegramLogin = () => {
     setIsLoading(true);
     setError('');
     
-    const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || '7620357455';
+    const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || 'Smamiapbot';
     const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
     
-    // إعداد خيارات المصادقة
-    const authOptions = {
-      bot_id: botId,
-      request_access: true,
-      lang: 'ar',
-      return_to: `${currentOrigin}/api/auth/telegram/callback`
-    };
-
-    // فتح نافذة المصادقة
-    window.Telegram.Login.auth(authOptions, (userData) => {
-      if (!userData) {
-        setError('تم إلغاء عملية التسجيل');
-        setIsLoading(false);
-        return;
-      }
-
-      // التحقق من البيانات
-      verifyAuthData(userData);
-    });
+    // إنشاء زر Telegram Widget
+    const script = document.createElement('script');
+    script.src = `https://telegram.org/js/telegram-widget.js?22`;
+    script.async = true;
+    script.setAttribute('data-telegram-login', botId);
+    script.setAttribute('data-size', 'large');
+    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+    script.setAttribute('data-request-access', 'write');
+    script.setAttribute('data-userpic', 'false');
+    script.setAttribute('data-lang', 'ar');
+    
+    // إنشاء عنصر زر مؤقت لتنشيط الويدجت
+    const tempDiv = document.createElement('div');
+    tempDiv.style.display = 'none';
+    tempDiv.id = 'telegram-login-container';
+    tempDiv.appendChild(script);
+    document.body.appendChild(tempDiv);
+    
+    // محاكاة النقر على زر Telegram
+    const telegramButton = document.querySelector('#telegram-login-container script');
+    if (telegramButton) {
+      telegramButton.onload = () => {
+        const event = new MouseEvent('click', {
+          view: window,
+          bubbles: true,
+          cancelable: true
+        });
+        telegramButton.dispatchEvent(event);
+      };
+    }
   };
 
   const verifyAuthData = async (data) => {
@@ -58,21 +81,13 @@ export default function LoginPage() {
       setError('حدث خطأ أثناء المصادقة: ' + err.message);
     } finally {
       setIsLoading(false);
+      // تنظيف العناصر المؤقتة
+      const tempDiv = document.getElementById('telegram-login-container');
+      if (tempDiv) {
+        document.body.removeChild(tempDiv);
+      }
     }
   };
-
-  // تحميل سكربت Telegram عند تركيب المكون
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://telegram.org/js/telegram-widget.js?22';
-    script.async = true;
-    script.onload = () => console.log('Telegram Widget loaded');
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-900 text-white">
