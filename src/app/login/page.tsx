@@ -6,29 +6,42 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// تعريف واجهة مخصصة لـ Window لتشمل onTelegramAuth
+declare global {
+  interface Window {
+    onTelegramAuth?: (userData: any) => void;
+  }
+}
+
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
 
-  // هذه الدالة سيتم استدعاؤها من قبل ويدجت Telegram
-  window.onTelegramAuth = (userData) => {
-    if (!userData) {
-      setError('تم إلغاء عملية التسجيل');
-      setIsLoading(false);
-      return;
-    }
+  useEffect(() => {
+    // هذه الدالة سيتم استدعاؤها من قبل ويدجت Telegram
+    window.onTelegramAuth = (userData) => {
+      if (!userData) {
+        setError('تم إلغاء عملية التسجيل');
+        setIsLoading(false);
+        return;
+      }
 
-    // التحقق من البيانات
-    verifyAuthData(userData);
-  };
+      // التحقق من البيانات
+      verifyAuthData(userData);
+    };
+
+    return () => {
+      // تنظيف الدالة عند إلغاء المكون
+      window.onTelegramAuth = undefined;
+    };
+  }, []);
 
   const handleTelegramLogin = () => {
     setIsLoading(true);
     setError('');
     
     const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || 'Smamiapbot';
-    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
     
     // إنشاء زر Telegram Widget
     const script = document.createElement('script');
@@ -62,7 +75,7 @@ export default function LoginPage() {
     }
   };
 
-  const verifyAuthData = async (data) => {
+  const verifyAuthData = async (data: any) => {
     try {
       const response = await fetch('/api/auth/telegram', {
         method: 'POST',
@@ -78,7 +91,7 @@ export default function LoginPage() {
         throw new Error('فشل التحقق من البيانات');
       }
     } catch (err) {
-      setError('حدث خطأ أثناء المصادقة: ' + err.message);
+      setError('حدث خطأ أثناء المصادقة: ' + (err as Error).message);
     } finally {
       setIsLoading(false);
       // تنظيف العناصر المؤقتة
