@@ -38,7 +38,7 @@ function verifyTelegramData(data) {
       .digest('hex');
 
     // Check if data is outdated (e.g., older than 1 day)
-    const authDate = parseInt(data.auth_date, 10);
+    const authDate = parseInt(data.auth_code, 10);
     const now = Math.floor(Date.now() / 1000);
     if (now - authDate > 86400) { // 86400 seconds = 1 day
         console.warn("Telegram data is outdated.");
@@ -58,6 +58,9 @@ export async function POST(request) {
     // Let's adjust to handle GET request and query parameters
     const url = new URL(request.url);
     const queryParams = Object.fromEntries(url.searchParams.entries());
+    console.log("🔍 Query Params:", queryParams);
+
+
 
     // التحقق من صحة البيانات
     if (!verifyTelegramData(queryParams)) {
@@ -73,7 +76,7 @@ export async function POST(request) {
     let { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('telegram_id', telegramUserData.id)
+      .eq('telegram_id', telegramUserData.user_id)
       .single();
 
     // إذا لم يكن المستخدم موجودًا، قم بإنشائه
@@ -84,8 +87,8 @@ export async function POST(request) {
         .from('users')
         .insert([
           {
-            telegram_id: telegramUserData.id,
-            username: telegramUserData.username || `user${telegramUserData.id}`,
+            telegram_id: telegramUserData.user_id,
+            username: telegramUserData.username || `user${telegramUserData.user_id}`,
             wallet_address: walletAddress,
             first_name: telegramUserData.first_name, // Store first name if available
             last_name: telegramUserData.last_name,   // Store last name if available
