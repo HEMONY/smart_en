@@ -24,6 +24,12 @@ export default function LoginPage() {
         setIsLoading(false);
         return;
       }
+      onsole.log('🔍 Query Params:', {
+        user_id: userData.id,
+        first_name: userData.first_name,
+        username: userData.username,
+        hash: userData.hash,
+      });
       verifyAuthData(userData);
     };
 
