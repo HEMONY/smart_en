@@ -1,11 +1,16 @@
 'use client';
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import Link from 'next/link';
 import { FaTelegramPlane } from 'react-icons/fa';
 import { SiTon } from 'react-icons/si';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+declare global {
+  interface Window {
+    onTelegramAuth?: (userData: any) => void;
+  }
+}
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,41 +18,70 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const tg = (window as any).Telegram?.WebApp;
-
-    if (!tg || !tg.initDataUnsafe || !tg.initDataUnsafe.user) {
-      setError('فشل في الحصول على بيانات تسجيل الدخول من Telegram');
-      return;
-    }
-
-    const data = tg.initDataUnsafe;
-    console.log('✅ Telegram WebApp data:', data);
-
-    // تحقق من وجود القيم المطلوبة
-    if (!data.user || !data.auth_date || !data.hash) {
-      setError('البيانات غير مكتملة من Telegram');
-      return;
-    }
-
-    const payload = {
-      user_id: data.user.id,
-      first_name: data.user.first_name,
-      last_name: data.user.last_name,
-      username: data.user.username,
-      photo_url: data.user.photo_url,
-      auth_date: data.auth_date,
-      hash: data.hash
+    window.onTelegramAuth = (userData) => {
+      if (!userData) {
+        setError('تم إلغاء عملية التسجيل');
+        setIsLoading(false);
+        return;
+      }
+      console.log('🔍 Query Params:', {
+        user_id: userData.id,
+        first_name: userData.first_name,
+        username: userData.username,
+        hash: userData.hash,
+      });
+      verifyAuthData(userData);
     };
 
-    verifyAuthData(payload);
+    return () => {
+      window.onTelegramAuth = undefined;
+    };
   }, []);
+
+  const handleTelegramLogin = () => {
+    setIsLoading(true);
+    setError('');
+    
+    const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || 'Smamiapbot';
+    
+    // إنشاء زر Telegram Widget
+    const script = document.createElement('script');
+    script.src = `https://telegram.org/js/telegram-widget.js?22`;
+    script.async = true;
+    script.setAttribute('data-telegram-login', botId);
+    script.setAttribute('data-size', 'large');
+    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+    script.setAttribute('data-request-access', 'write');
+    script.setAttribute('data-userpic', 'false');
+    script.setAttribute('data-lang', 'ar');
+    
+    // إضافة معالج حدث load مباشرة على عنصر السكربت
+    script.onload = () => {
+      // بعد تحميل السكربت، قم بإنشاء حدث النقر
+      const event = new MouseEvent('click', {
+        view: window,
+        bubbles: true,
+        cancelable: true
+      });
+      // إرسال الحدث إلى السكربت
+      script.dispatchEvent(event);
+    };
+
+    // إنشاء عنصر مؤقت وإضافة السكربت إليه
+    const tempDiv = document.createElement('div');
+    tempDiv.style.display = 'none';
+    tempDiv.id = 'telegram-login-container';
+    tempDiv.appendChild(script);
+    document.body.appendChild(tempDiv);
+  };
 
   const verifyAuthData = async (data: any) => {
     try {
-      setIsLoading(true);
       const response = await fetch('/api/auth/telegram', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(data)
       });
 
@@ -60,6 +94,10 @@ export default function LoginPage() {
       setError('حدث خطأ أثناء المصادقة: ' + (err as Error).message);
     } finally {
       setIsLoading(false);
+      const tempDiv = document.getElementById('telegram-login-container');
+      if (tempDiv) {
+        document.body.removeChild(tempDiv);
+      }
     }
   };
 
@@ -95,17 +133,46 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg mb-6">
-          <h2 className="text-xl font-bold mb-4 text-center">جاري التحقق من الدخول...</h2>
-
-          <div className="text-center text-gray-400">
-            {isLoading ? (
-              <span>⏳ يرجى الانتظار...</span>
-            ) : (
-              <span>👆 يرجى فتح هذه الصفحة من داخل تطبيق Telegram</span>
-            )}
+          <h2 className="text-xl font-bold mb-4 text-center">اختر طريقة التسجيل</h2>
+          
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg mb-2">تسجيل الدخول عبر تيليجرام</h3>
+              <p className="text-sm text-gray-400 mb-3">
+                سجل دخولك بضغطة واحدة باستخدام حساب تيليجرام
+              </p>
+              <button
+                onClick={handleTelegramLogin}
+                disabled={isLoading}
+                className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg w-full transition-colors disabled:opacity-70"
+              >
+                {isLoading ? (
+                  <span>جاري التحقق...</span>
+                ) : (
+                  <>
+                    <FaTelegramPlane size={20} />
+                    <span>المتابعة مع تيليجرام</span>
+                  </>
+                )}
+              </button>
+            </div>
+            
+            <div className="border-t border-gray-700 pt-6">
+              <h3 className="text-lg mb-2">تسجيل الدخول عبر محفظة TON</h3>
+              <p className="text-sm text-gray-400 mb-3">
+                اتصل بمحفظتك الخارجية لتسجيل الدخول
+              </p>
+              <button 
+                className="flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg w-full transition-colors"
+                onClick={() => alert('سيتم تفعيل هذه الميزة قريباً')}
+              >
+                <SiTon size={20} />
+                <span>الاتصال بالمحفظة</span>
+              </button>
+            </div>
           </div>
         </div>
-
+        
         <div className="text-center text-sm text-gray-400">
           <p>باستمرارك، أنت توافق على <Link href="/terms" className="text-yellow-400 hover:underline">الشروط</Link> و <Link href="/privacy" className="text-yellow-400 hover:underline">الخصوصية</Link></p>
         </div>
