@@ -1,49 +1,82 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 
-// --- Telegram API Credentials (يفضل نقلها إلى .env) ---
-const TELEGRAM_API_ID = '20942401';
-const TELEGRAM_BOT_TOKEN = '7620357455:AAFZKGpQUrC7LvQgTzHSrAH4x1IbjEkDhDM';
+// --- Telegram API Credentials ---
+// !!! SECURITY WARNING: Move these to environment variables (.env file) !!!
+const TELEGRAM_API_ID = '20942401'; // Provided by user
+const TELEGRAM_BOT_TOKEN = '8002470444:AAHKFlbocuKZNxmr2sWYGfyycWNInh7spcA'; // Provided by user
 
 // إعداد عميل Supabase
 const supabaseUrl = 'https://xsxbeihsavosrxjyzmga.supabase.co';
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzeGJlaWhzYXZvc3J4anl6bWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjI2ODEsImV4cCI6MjA2NzEzODY4MX0.79iTU8QrexMFSrg_CesL_vOSwQ0TWxq3iN8TsVDWE-o';// اختصرنا المفتاح للخصوصية
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzeGJlaWhzYXZvc3J4anl6bWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjI2ODEsImV4cCI6MjA2NzEzODY4MX0.79iTU8QrexMFSrg_CesL_vOSwQ0TWxq3iN8TsVDWE-o';
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// ✅ التحقق البسيط من وجود user_id و auth_code فقط
+// التحقق من صحة بيانات تيليغرام
+// Reference: https://core.telegram.org/widgets/login#checking-authorization
 function verifyTelegramData(data) {
-  if (!data || !data.user_id || !data.auth_code) {
-    console.warn("Missing required fields.");
+  if (!TELEGRAM_BOT_TOKEN) {
+    console.error('Telegram Bot Token is not configured!');
+    return false; // Fail verification if token is missing
+  }
+
+  const receivedHash = data.hash;
+  if (!receivedHash) {
     return false;
   }
 
-  // لا تتحقق من auth_code كـ توقيت
-  return true;
-}
+  const dataCheckString = Object.keys(data)
+    .filter((key) => key !== 'hash')
+    .sort()
+    .map((key) => `${key}=${data[key]}`)
+    .join('\n');
 
+  try {
+    const secretKey = crypto.createHash('sha256').update(TELEGRAM_BOT_TOKEN).digest();
+    const calculatedHash = crypto.createHmac('sha256', secretKey)
+      .update(dataCheckString)
+      .digest('hex');
+
+    // Check if data is outdated (e.g., older than 1 day)
+    const authDate = parseInt(data.auth_date, 10);
+    const now = Math.floor(Date.now() / 1000);
+    if (now - authDate > 86400) { // 86400 seconds = 1 day
+        console.warn("Telegram data is outdated.");
+        return false;
+    }
+
+    return calculatedHash === receivedHash;
+  } catch (error) {
+    console.error('Error verifying Telegram data:', error);
+    return false;
+  }
+}
 
 export async function POST(request) {
   try {
+    // The Telegram widget sends data via query parameters on GET request, not POST body
+    // Let's adjust to handle GET request and query parameters
     const url = new URL(request.url);
     const queryParams = Object.fromEntries(url.searchParams.entries());
-    console.log("🔍 Query Params:", queryParams);
 
+    // التحقق من صحة البيانات
     if (!verifyTelegramData(queryParams)) {
       console.warn('Telegram data verification failed.');
+      // Redirect back to login with an error message
       const errorUrl = new URL('/login?error=telegram_auth_failed', request.url);
       return NextResponse.redirect(errorUrl.toString(), 302);
     }
 
     const telegramUserData = queryParams;
 
-    // البحث عن المستخدم
+    // البحث عن المستخدم في قاعدة البيانات
     let { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('telegram_id', telegramUserData.user_id)
+      .eq('telegram_id', telegramUserData.id)
       .single();
 
-    // المستخدم غير موجود → إنشاء
+    // إذا لم يكن المستخدم موجودًا، قم بإنشائه
     if (error && error.code === 'PGRST116') {
       const walletAddress = generateWalletAddress();
 
@@ -51,16 +84,16 @@ export async function POST(request) {
         .from('users')
         .insert([
           {
-            telegram_id: telegramUserData.user_id,
-            username: telegramUserData.username || `user${telegramUserData.user_id}`,
+            telegram_id: telegramUserData.id,
+            username: telegramUserData.username || `user${telegramUserData.id}`,
             wallet_address: walletAddress,
-            first_name: telegramUserData.first_name,
-            last_name: telegramUserData.last_name,
-            photo_url: telegramUserData.photo_url
+            first_name: telegramUserData.first_name, // Store first name if available
+            last_name: telegramUserData.last_name,   // Store last name if available
+            photo_url: telegramUserData.photo_url    // Store photo url if available
           }
         ])
         .select()
-        .single();
+        .single(); // Expecting a single new user
 
       if (createError) {
         console.error('Supabase insert error:', createError);
@@ -74,7 +107,7 @@ export async function POST(request) {
       const errorUrl = new URL('/login?error=database_error', request.url);
       return NextResponse.redirect(errorUrl.toString(), 302);
     } else {
-      // تحديث بيانات المستخدم في حال وجود تغييرات
+      // Optional: Update existing user data if needed (e.g., username, photo_url)
       const updates = {};
       if (telegramUserData.username && user.username !== telegramUserData.username) updates.username = telegramUserData.username;
       if (telegramUserData.first_name && user.first_name !== telegramUserData.first_name) updates.first_name = telegramUserData.first_name;
@@ -82,38 +115,53 @@ export async function POST(request) {
       if (telegramUserData.photo_url && user.photo_url !== telegramUserData.photo_url) updates.photo_url = telegramUserData.photo_url;
 
       if (Object.keys(updates).length > 0) {
-        const { error: updateError } = await supabase
-          .from('users')
-          .update(updates)
-          .eq('id', user.id);
-        if (updateError) {
-          console.error('Supabase update error:', updateError);
-        }
+          const { error: updateError } = await supabase
+              .from('users')
+              .update(updates)
+              .eq('id', user.id);
+          if (updateError) {
+              console.error('Supabase update error:', updateError);
+              // Continue even if update fails, login is still successful
+          }
       }
     }
 
-    // إعادة التوجيه للوحة التحكم
+    // --- Session Handling ---
+    // We need to create a session for the user. Since this is server-side,
+    // we might need to use Supabase admin functions or handle JWTs.
+    // For now, let's assume Supabase handles cookies if configured correctly.
+    // Redirecting should allow the client-side Supabase client to pick up the session.
+
+    // Redirect to dashboard upon successful login/signup
     const redirectUrl = new URL('/dashboard', request.url);
+    // We might need to set cookies here if Supabase doesn't do it automatically
+    // based on the redirect from Telegram widget.
+    // This part requires careful handling of Supabase auth flow.
+    // For now, just redirect.
     return NextResponse.redirect(redirectUrl.toString(), 302);
+
 
   } catch (error) {
     console.error('Server error:', error);
-    const errorUrl = new URL('/login?error=server_error', request.url);
+    const errorUrl = new URL('/login?error=server_error', request.url); // Redirect back to login with error
     return NextResponse.redirect(errorUrl.toString(), 302);
   }
 }
 
-// دعم GET لأن Telegram login widget يرسل الطلب على هيئة GET
+// Add a GET handler since Telegram widget uses GET for callback
 export async function GET(request) {
-  return await POST(request);
+    // Reuse the POST logic, as the data comes in query params for GET
+    return await POST(request);
 }
 
-// توليد عنوان محفظة وهمي (ينبغي تغييره في الإنتاج)
+
+// توليد عنوان محفظة عشوائي (Consider a more robust method for production)
 function generateWalletAddress() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = 'EQC';
-  for (let i = 0; i < 45; i++) {
+  let result = 'EQC'; // Example prefix
+  for (let i = 0; i < 45; i++) { // Longer address
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
 }
+
