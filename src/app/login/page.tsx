@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// تعريف واجهة مخصصة لـ Window لتشمل onTelegramAuth
 declare global {
   interface Window {
     onTelegramAuth?: (userData: any) => void;
@@ -19,20 +18,16 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // هذه الدالة سيتم استدعاؤها من قبل ويدجت Telegram
     window.onTelegramAuth = (userData) => {
       if (!userData) {
         setError('تم إلغاء عملية التسجيل');
         setIsLoading(false);
         return;
       }
-
-      // التحقق من البيانات
       verifyAuthData(userData);
     };
 
     return () => {
-      // تنظيف الدالة عند إلغاء المكون
       window.onTelegramAuth = undefined;
     };
   }, []);
@@ -41,7 +36,7 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
     
-    const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || 'Smamiapbot';
+    const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || '7620357455';
     
     // إنشاء زر Telegram Widget
     const script = document.createElement('script');
@@ -54,25 +49,24 @@ export default function LoginPage() {
     script.setAttribute('data-userpic', 'false');
     script.setAttribute('data-lang', 'ar');
     
-    // إنشاء عنصر زر مؤقت لتنشيط الويدجت
+    // إضافة معالج حدث load مباشرة على عنصر السكربت
+    script.onload = () => {
+      // بعد تحميل السكربت، قم بإنشاء حدث النقر
+      const event = new MouseEvent('click', {
+        view: window,
+        bubbles: true,
+        cancelable: true
+      });
+      // إرسال الحدث إلى السكربت
+      script.dispatchEvent(event);
+    };
+
+    // إنشاء عنصر مؤقت وإضافة السكربت إليه
     const tempDiv = document.createElement('div');
     tempDiv.style.display = 'none';
     tempDiv.id = 'telegram-login-container';
     tempDiv.appendChild(script);
     document.body.appendChild(tempDiv);
-    
-    // محاكاة النقر على زر Telegram
-    const telegramButton = document.querySelector('#telegram-login-container script');
-    if (telegramButton) {
-      telegramButton.onload = () => {
-        const event = new MouseEvent('click', {
-          view: window,
-          bubbles: true,
-          cancelable: true
-        });
-        telegramButton.dispatchEvent(event);
-      };
-    }
   };
 
   const verifyAuthData = async (data: any) => {
@@ -94,7 +88,6 @@ export default function LoginPage() {
       setError('حدث خطأ أثناء المصادقة: ' + (err as Error).message);
     } finally {
       setIsLoading(false);
-      // تنظيف العناصر المؤقتة
       const tempDiv = document.getElementById('telegram-login-container');
       if (tempDiv) {
         document.body.removeChild(tempDiv);
