@@ -5,7 +5,7 @@ import crypto from 'crypto';
 // --- Telegram API Credentials ---
 const TELEGRAM_API_ID = '20942401';
 const TELEGRAM_BOT_TOKEN = '8002470444:AAHKFlbocuKZNxmr2sWYGfyycWNInh7spcA';
-
+ 
 // إعداد Supabase
 const supabase = createClient(
   'https://xsxbeihsavosrxjyzmga.supabase.co',
