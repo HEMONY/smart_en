@@ -17,20 +17,10 @@ function verifyTelegramData(data) {
     return false;
   }
 
-  const authDate = parseInt(data.auth_code, 10);
-  if (isNaN(authDate)) {
-    console.warn("Invalid auth_code.");
-    return false;
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  if (now - authDate > 86400) {
-    console.warn("auth_code is outdated.");
-    return false;
-  }
-
+  // لا تتحقق من auth_code كـ توقيت
   return true;
 }
+
 
 export async function POST(request) {
   try {
