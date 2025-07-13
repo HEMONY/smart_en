@@ -6,13 +6,17 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// تعريف نوع لـ Telegram Login Widget
+type TelegramLoginWidget = {
+  Login: {
+    auth: (options: any, callback: (userData: any) => void) => void;
+  };
+};
+
+// توسيع واجهة Window لتشمل Telegram
 declare global {
   interface Window {
-    Telegram?: {
-      Login: {
-        auth: (options: any, callback: (userData: any) => void) => void;
-      };
-    };
+    Telegram?: TelegramLoginWidget;
   }
 }
 
@@ -46,7 +50,7 @@ export default function LoginPage() {
       return_to: `${currentOrigin}/api/auth/telegram/callback`
     };
 
-    if (window.Telegram && window.Telegram.Login) {
+    if (window.Telegram?.Login?.auth) {
       window.Telegram.Login.auth(authOptions, (userData) => {
         if (!userData) {
           setError('تم إلغاء عملية التسجيل');
@@ -54,7 +58,6 @@ export default function LoginPage() {
           return;
         }
         
-        // تأكد من وجود الهاش قبل المتابعة
         if (!userData.hash) {
           setError('بيانات المصادقة غير صالحة: الهاش مفقود');
           setIsLoading(false);
