@@ -1,6 +1,6 @@
 "use client";
 
-import { FaTelegramPlane } from 'react-icons/fa';
+import { FaTelegramPlane } from 'react-icons/fa'; 
 import { SiTon } from 'react-icons/si';
 import Image from 'next/image';
 import Link from 'next/link';
