@@ -74,7 +74,7 @@ export async function POST(request) {
     let { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('telegram_id', telegramUserData.user_id)
+      .eq('telegram_id', telegramUserData.id)
       .single();
     console.log('📦 نتيجة البحث في Supabase:', { user, error });
 
@@ -82,8 +82,8 @@ export async function POST(request) {
     if (error && error.code === 'PGRST116') {
       const walletAddress = generateWalletAddress();
       console.log('🆕 إنشاء مستخدم جديد مع البيانات:', {
-        telegram_id: telegramUserData.user_id,
-        username: telegramUserData.username || `user${telegramUserData.user_id}`,
+        telegram_id: telegramUserData.id,
+        username: telegramUserData.username || `user${telegramUserData.id}`,
         wallet_address: walletAddress,
         first_name: telegramUserData.first_name,
         last_name: telegramUserData.last_name,
@@ -95,7 +95,7 @@ export async function POST(request) {
         .insert([
           {
             telegram_id: telegramUserData.id,
-            username: telegramUserData.username || `user${telegramUserData.user_id}`,
+            username: telegramUserData.username || `user${telegramUserData.id}`,
             wallet_address: walletAddress,
             first_name: telegramUserData.first_name, // Store first name if available
             last_name: telegramUserData.last_name,   // Store last name if available
