@@ -33,7 +33,7 @@ export default function LoginPage() {
               </p>
               <div className="flex justify-center">
                 <script async src="https://telegram.org/js/telegram-widget.js?7"
-                  data-telegram-login="اسم_البوت_هنا"
+                  data-telegram-login="Tesmiapbot"
                   data-size="large"
                   data-userpic="false"
                   data-request-access="write"
