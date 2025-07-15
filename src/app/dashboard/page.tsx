@@ -175,7 +175,7 @@ export default function Dashboard() {
 
       <div className="p-4 flex flex-col items-center">
         <button
-          className={`mining-button ${!miningAvailable || miningLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={mining-button ${!miningAvailable || miningLoading ? 'opacity-50 cursor-not-allowed' : ''}}
           onClick={handleStartMining}
           disabled={!miningAvailable || miningLoading}
         >
