@@ -19,7 +19,7 @@ export default function TasksPage() {
       title: 'متابعة قناة تيليغرام', 
       description: 'قم بمتابعة القناة الرسمية على تيليغرام', 
       icon: FaTelegram, 
-      link: 'https://t.me/smartcoinapp',
+      link: 'https://t.me/SMARTCOINCHANNAL',
       reward: 50,
       completed: false
     },
