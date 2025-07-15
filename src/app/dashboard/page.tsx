@@ -175,10 +175,12 @@ export default function Dashboard() {
 
       <div className="p-4 flex flex-col items-center">
         <button
-          className={mining-button ${!miningAvailable || miningLoading ? 'opacity-50 cursor-not-allowed' : ''}}
-          onClick={handleStartMining}
-          disabled={!miningAvailable || miningLoading}
-        >
+          <button
+            className={`mining-button ${!miningAvailable || miningLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={handleStartMining}
+            disabled={!miningAvailable || miningLoading}
+          >
+
           {miningLoading ? (
             <span className="flex items-center">
               <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-background-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
