@@ -1,62 +1,128 @@
-"use client";
+'use client';
 
-import { FaTelegramPlane } from 'react-icons/fa'; 
-import { SiTon } from 'react-icons/si';
-import Image from 'next/image';
-import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import BottomNavigation from '@/components/layout/BottomNavigation';
+import {
+  FaUser,
+  FaSignOutAlt,
+  FaCog,
+  FaInfoCircle,
+  FaQuestionCircle,
+  FaShieldAlt
+} from 'react-icons/fa';
 
-export default function LoginPage() {
+export default function ProfilePage() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('smartCoinUser');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>جارٍ تحميل البيانات...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Image 
-            src="/assets/smart-coin-logo.png" 
-            alt="Smart Coin" 
-            width={120} 
-            height={120} 
-            className="mx-auto mb-4"
-          />
-          <h1 className="text-3xl font-bold gold-text">Smart Coin</h1>
-          <p className="text-gray-400 mt-2">منصة التعدين الذكية</p>
-          <p className="text-gray-300 mt-4 text-sm max-w-sm mx-auto">نحن فخورون بالإعلان عن استثمارات بقيمة 350 مليون دولار لدعم رؤيتنا. نسعى لنصبح منصة لا مركزية رائدة لتداول العملات المشفرة، وستكون عملتنا الرقمية جزءًا أساسيًا من نظام الدفع داخل المنصة.</p>
-        </div>
+    <div className="min-h-screen pb-20">
+      {/* رأس الصفحة */}
+      <header className="p-4 text-center">
+        <h1 className="text-2xl font-bold gold-text">الملف الشخصي</h1>
+      </header>
 
-        <div className="card mb-6">
-          <h2 className="text-xl font-bold mb-4 text-center">اختر طريقة تسجيل الدخول المفضلة لديك</h2>
-          
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg mb-2">تسجيل الدخول عبر تيليجرام</h3>
-              <p className="text-sm text-gray-400 mb-3">
-                قم بتسجيل الدخول باستخدام حساب تيليجرام الخاص بك. سيتم إرسال رمز تحقق إلى بوت تيليجرام الخاص بنا.
-              </p>
-              <Link href="/api/auth/telegram" className="primary-button w-full">
-                <FaTelegramPlane size={20} />
-                <span>تسجيل الدخول عبر تيليجرام</span>
-              </Link>
+      {/* معلومات المستخدم */}
+      <div className="p-4">
+        <div className="card">
+          <div className="flex items-center mb-6">
+            <div className="w-16 h-16 bg-background-gray rounded-full flex items-center justify-center mr-4">
+              <FaUser size={32} className="text-primary-gold" />
             </div>
-            
-            <div className="border-t border-gray-700 pt-6">
-              <h3 className="text-lg mb-2">تسجيل الدخول عبر محفظة TON</h3>
-              <p className="text-sm text-gray-400 mb-3">
-                قم بتسجيل الدخول باستخدام محفظة TON الخاصة بك. سيتم التحقق من هويتك عبر توقيع رسالة بمحفظتك.
-              </p>
-              <button className="secondary-button w-full">
-                <SiTon size={20} />
-                <span>تسجيل الدخول عبر محفظة TON</span>
-              </button>
+            <div>
+              <h2 className="text-xl font-bold">{user.username || 'مستخدم'}</h2>
+              <p className="text-sm text-gray-400">{user.telegramId || ''}</p>
+              <p className="text-xs text-gray-500">عضو منذ {new Date(user.joinDate).toLocaleDateString('ar-EG')}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-background-gray rounded-lg p-3 text-center">
+              <p className="text-sm text-gray-400">العملات</p>
+              <p className="text-lg font-bold gold-text">{user.totalCoins || 0}</p>
+            </div>
+            <div className="bg-background-gray rounded-lg p-3 text-center">
+              <p className="text-sm text-gray-400">الإحالات</p>
+              <p className="text-lg font-bold gold-text">{user.referrals || 0}</p>
+            </div>
+            <div className="bg-background-gray rounded-lg p-3 text-center">
+              <p className="text-sm text-gray-400">المهام</p>
+              <p className="text-lg font-bold gold-text">{user.completedTasks || 0}/4</p>
             </div>
           </div>
         </div>
-        
-        <div className="text-center">
-          <p className="text-sm text-gray-400">
-            بالتسجيل، أنت توافق على <Link href="/terms" className="text-primary-gold">شروط الاستخدام</Link> و <Link href="/privacy" className="text-primary-gold">سياسة الخصوصية</Link>
-          </p>
+      </div>
+
+      {/* قائمة الإعدادات */}
+      <div className="p-4">
+        <div className="card">
+          <h2 className="text-lg font-bold mb-4">الإعدادات</h2>
+          <div className="space-y-3">
+            <button className="flex items-center justify-between w-full p-3 bg-background-gray rounded-lg">
+              <div className="flex items-center">
+                <FaCog className="text-primary-gold mr-3" size={18} />
+                <span>إعدادات الحساب</span>
+              </div>
+              <span className="text-gray-400">›</span>
+            </button>
+
+            <button className="flex items-center justify-between w-full p-3 bg-background-gray rounded-lg">
+              <div className="flex items-center">
+                <FaShieldAlt className="text-primary-gold mr-3" size={18} />
+                <span>الأمان والخصوصية</span>
+              </div>
+              <span className="text-gray-400">›</span>
+            </button>
+
+            <button className="flex items-center justify-between w-full p-3 bg-background-gray rounded-lg">
+              <div className="flex items-center">
+                <FaInfoCircle className="text-primary-gold mr-3" size={18} />
+                <span>عن التطبيق</span>
+              </div>
+              <span className="text-gray-400">›</span>
+            </button>
+
+            <button className="flex items-center justify-between w-full p-3 bg-background-gray rounded-lg">
+              <div className="flex items-center">
+                <FaQuestionCircle className="text-primary-gold mr-3" size={18} />
+                <span>المساعدة والدعم</span>
+              </div>
+              <span className="text-gray-400">›</span>
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* زر تسجيل الخروج */}
+      <div className="p-4">
+        <button
+          className="secondary-button w-full"
+          onClick={() => {
+            localStorage.removeItem('smartCoinUser');
+            window.location.href = '/login';
+          }}
+        >
+          <FaSignOutAlt size={18} />
+          <span>تسجيل الخروج</span>
+        </button>
+      </div>
+
+      {/* شريط التنقل السفلي */}
+      <BottomNavigation currentPath="/profile" />
     </div>
   );
 }
-
