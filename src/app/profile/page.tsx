@@ -1,6 +1,5 @@
 'use client';
 
-
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import {
   FaUser,
@@ -13,11 +12,14 @@ import {
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useUser } from '@/context/UserProvider';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
   const { user } = useUser();
   const supabase = createClientComponentClient();
-  const [userData, setUserData] = useState(null);
+  const router = useRouter();
+
+  const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -42,6 +44,11 @@ export default function ProfilePage() {
 
     fetchUserData();
   }, [user]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login'); // تأكد أن لديك صفحة login
+  };
 
   if (!user) {
     return (
@@ -147,7 +154,7 @@ export default function ProfilePage() {
 
       {/* زر تسجيل الخروج */}
       <div className="p-4">
-        <button className="secondary-button w-full">
+        <button className="secondary-button w-full" onClick={handleLogout}>
           <FaSignOutAlt size={18} />
           <span>تسجيل الخروج</span>
         </button>
