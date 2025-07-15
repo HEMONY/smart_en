@@ -16,8 +16,8 @@ export default function Dashboard() {
     minutes: 0,
     seconds: 0
   });
-  const [nextMiningTime, setNextMiningTime] = useState(null);
-  const [user, setUser] = useState(null);
+  const [nextMiningTime, setNextMiningTime] = useState<Date | null>(null);
+  const [user, setUser] = useState<any>(null);
   const supabase = createClientComponentClient();
 
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function Dashboard() {
     fetchUser();
   }, []);
 
-  const checkLastMining = async (userId) => {
+  const checkLastMining = async (userId: string) => {
     const { data, error } = await supabase
       .from('users')
       .select('last_mining')
@@ -57,7 +57,7 @@ export default function Dashboard() {
     }
   };
 
-  const startCountdown = (targetTime) => {
+  const startCountdown = (targetTime: Date) => {
     const interval = setInterval(() => {
       const now = new Date();
       const diff = targetTime.getTime() - now.getTime();
@@ -111,7 +111,7 @@ export default function Dashboard() {
       setNextMiningTime(nextTime);
       startCountdown(nextTime);
       setMiningAvailable(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('خطأ في بدء التعدين:', error);
       setMiningError(error.message || 'حدث خطأ أثناء بدء التعدين');
     } finally {
@@ -126,40 +126,40 @@ export default function Dashboard() {
       </header>
 
       <div className="p-4">
-        <div className="countdown-container">
+        <div className="countdown-container flex justify-center gap-4 text-center">
           <div className="countdown-item">
-            <div className="countdown-value">{countdown.days}</div>
+            <div className="countdown-value text-xl font-semibold">{countdown.days}</div>
             <div className="countdown-label">يوم</div>
           </div>
           <div className="countdown-item">
-            <div className="countdown-value">{countdown.hours}</div>
+            <div className="countdown-value text-xl font-semibold">{countdown.hours}</div>
             <div className="countdown-label">ساعة</div>
           </div>
           <div className="countdown-item">
-            <div className="countdown-value">{countdown.minutes}</div>
+            <div className="countdown-value text-xl font-semibold">{countdown.minutes}</div>
             <div className="countdown-label">دقيقة</div>
           </div>
           <div className="countdown-item">
-            <div className="countdown-value">{countdown.seconds}</div>
+            <div className="countdown-value text-xl font-semibold">{countdown.seconds}</div>
             <div className="countdown-label">ثانية</div>
           </div>
         </div>
       </div>
 
       <div className="p-4">
-        <div className="card">
+        <div className="card bg-white rounded-lg p-4 shadow-md">
           <h2 className="text-lg font-bold mb-4 text-right">نمو العملة المتوقع</h2>
           <div className="h-64 relative">
             <div className="absolute bottom-0 right-0 w-full h-px bg-gray-700"></div>
             <div className="absolute right-0 top-0 h-full w-px bg-gray-700"></div>
-            <div className="absolute bottom-0 right-[5%] h-[5%] w-2 h-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[20%] h-[10%] w-2 h-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[35%] h-[20%] w-2 h-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[50%] h-[35%] w-2 h-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[65%] h-[50%] w-2 h-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[80%] h-[75%] w-2 h-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[95%] h-[95%] w-2 h-2 rounded-full bg-primary-gold"></div>
-            <svg className="absolute inset-0 w-full h-full">
+            <div className="absolute bottom-0 right-[5%] h-[5%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[20%] h-[10%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[35%] h-[20%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[50%] h-[35%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[65%] h-[50%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[80%] h-[75%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[95%] h-[95%] w-2 rounded-full bg-primary-gold"></div>
+            <svg className="absolute inset-0 w-full h-full pointer-events-none">
               <path d="M 5% 95% L 20% 90% L 35% 80% L 50% 65% L 65% 50% L 80% 25% L 95% 5%" fill="none" stroke="#FFD700" strokeWidth="2" />
             </svg>
             <div className="absolute bottom-[-20px] right-[5%] text-xs text-gray-500">الآن</div>
@@ -175,17 +175,24 @@ export default function Dashboard() {
 
       <div className="p-4 flex flex-col items-center">
         <button
-          <button
-            className={`mining-button ${!miningAvailable || miningLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            onClick={handleStartMining}
-            disabled={!miningAvailable || miningLoading}
-          >
-
+          className={`mining-button ${!miningAvailable || miningLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          onClick={handleStartMining}
+          disabled={!miningAvailable || miningLoading}
+        >
           {miningLoading ? (
             <span className="flex items-center">
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-background-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-background-black"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
               جاري التعدين...
             </span>
@@ -209,7 +216,7 @@ export default function Dashboard() {
           </p>
         )}
 
-        <Link href="/about" className="mt-6 secondary-button">
+        <Link href="/about" className="mt-6 secondary-button flex items-center gap-1">
           <FaInfoCircle size={18} />
           <span>تعرف على المزيد</span>
         </Link>
