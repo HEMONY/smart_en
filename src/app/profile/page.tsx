@@ -1,56 +1,91 @@
 'use client';
 
+import BottomNavigation from '@/components/layout/BottomNavigation';
+import {
+  FaUser,
+  FaSignOutAlt,
+  FaCog,
+  FaInfoCircle,
+  FaQuestionCircle,
+  FaShieldAlt,
+} from 'react-icons/fa';
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import BottomNavigation from '@/components/layout/BottomNavigation';
-import { FaUser, FaSignOutAlt, FaCog, FaInfoCircle, FaQuestionCircle, FaShieldAlt } from 'react-icons/fa';
 
 export default function ProfilePage() {
   const supabase = createClientComponentClient();
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     const fetchUserData = async () => {
+      setLoading(true);
+
       const {
         data: { user },
+        error: authError,
       } = await supabase.auth.getUser();
 
-      if (user) {
-        setUser(user);
-        const { data, error } = await supabase
-          .from('users')
-          .select('username, telegram_id, join_date, total_coins, referrals, completed_tasks')
-          .eq('id', user.id)
-          .single();
-
-        if (!error) {
-          setUserData(data);
-        } else {
-          console.error('خطأ في جلب بيانات المستخدم من قاعدة البيانات:', error);
-        }
+      console.log('المستخدم من Supabase:', user);
+      if (authError) {
+        console.error('خطأ في جلب المستخدم:', authError);
+        setErrorMsg('فشل في الحصول على المستخدم.');
+        setLoading(false);
+        return;
       }
+
+      if (!user) {
+        setErrorMsg('الرجاء تسجيل الدخول للوصول إلى الملف الشخصي.');
+        setLoading(false);
+        return;
+      }
+
+      setUser(user);
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('username, telegram_id, join_date, total_coins, referrals, completed_tasks')
+        .eq('id', user.id)
+        .single();
+
+      console.log('بيانات المستخدم من قاعدة البيانات:', data);
+      if (error || !data) {
+        console.error('خطأ في جلب بيانات المستخدم من قاعدة البيانات:', error);
+        setErrorMsg('لا يمكن تحميل بيانات المستخدم. تأكد من وجود حساب في قاعدة البيانات.');
+      } else {
+        setUserData(data);
+      }
+
+      setLoading(false);
     };
 
     fetchUserData();
   }, []);
 
-  if (!userData) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex justify-center items-center text-lg text-gray-500">
+      <div className="min-h-screen flex items-center justify-center text-lg text-gray-500">
         جاري تحميل البيانات...
+      </div>
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-lg text-red-500 text-center p-4">
+        {errorMsg}
       </div>
     );
   }
 
   return (
     <div className="min-h-screen pb-20">
-      {/* رأس الصفحة */}
       <header className="p-4 text-center">
         <h1 className="text-2xl font-bold gold-text">الملف الشخصي</h1>
       </header>
 
-      {/* معلومات المستخدم */}
       <div className="p-4">
         <div className="card">
           <div className="flex items-center mb-6">
@@ -131,7 +166,6 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {/* شريط التنقل السفلي */}
       <BottomNavigation currentPath="/profile" />
     </div>
   );
