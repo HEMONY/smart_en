@@ -1,18 +1,5 @@
 import '@/app/globals.css';
 import { Inter } from 'next/font/google';
-import { UserProvider } from '@/context/UserProvider';
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="ar">
-      <body>
-        <UserProvider>
-          {children}
-        </UserProvider>
-      </body>
-    </html>
-  );
-}
 
 const inter = Inter({ subsets: ['latin'] });
 
