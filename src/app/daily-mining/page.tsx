@@ -21,22 +21,23 @@ const DailyMiningPage = () => {
   useEffect(() => {
     // Simulate fetching user ID
     const fetchUser = async () => {
-        // Replace with actual user fetching logic, e.g., from session
-        const mockUserId = 'f8a4e3a2-5b7c-4f0e-8d3a-1b9c6a7e8f0d'; // Example UUID
-        setUserId(mockUserId);
-
-        if (mockUserId) {
-            // Fetch initial balance if needed elsewhere, or rely on mining_rate
-            const { data: balanceData, error: balanceError } = await supabase
-                .from('users')
-                .select('balance')
-                .eq('id', mockUserId)
-                .single();
-            if (balanceData) {
-                setUserBalance(balanceData.balance);
-            }
+      const storedUser = localStorage.getItem('smartCoinUser');
+      if (storedUser) {
+        const userObj = JSON.parse(storedUser);
+        setUserId(userObj.id);
+    
+        // Fetch balance
+        const { data: balanceData, error: balanceError } = await supabase
+          .from('users')
+          .select('balance')
+          .eq('id', userObj.id)
+          .single();
+        if (balanceData) {
+          setUserBalance(balanceData.balance);
         }
+      }
     };
+
     fetchUser();
   }, []);
   // --- End Placeholder ---
