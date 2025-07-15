@@ -148,7 +148,8 @@ export async function POST(request) {
     // based on the redirect from Telegram widget.
     // This part requires careful handling of Supabase auth flow.
     // For now, just redirect.
-    return NextResponse.redirect(redirectUrl.toString(), 302);
+    return NextResponse.json({ user });
+
 
 
   } catch (error) {
