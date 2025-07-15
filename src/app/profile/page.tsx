@@ -11,7 +11,20 @@ import {
 } from 'react-icons/fa';
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useUser } from '@/context/UserProvider';
 
+export default function Dashboard() {
+  const { user } = useUser();
+
+  if (!user) return <p>جاري تحميل بيانات المستخدم...</p>;
+
+  return (
+    <div>
+      <h1>مرحباً {user.email}</h1>
+      {/* بقية محتوى الصفحة */}
+    </div>
+  );
+}
 export default function ProfilePage() {
   const supabase = createClientComponentClient();
   const [user, setUser] = useState(null);
