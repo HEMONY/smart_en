@@ -1,6 +1,7 @@
 'use client';
 
-import BottomNavigation from '@/components/layout/BottomNavigation';
+import { useEffect, useState } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import {
   FaUser,
   FaSignOutAlt,
@@ -9,22 +10,8 @@ import {
   FaQuestionCircle,
   FaShieldAlt,
 } from 'react-icons/fa';
-import { useEffect, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useUser } from '@/context/UserProvider';
+import BottomNavigation from '@/components/layout/BottomNavigation';
 
-export default function Dashboard() {
-  const { user } = useUser();
-
-  if (!user) return <p>جاري تحميل بيانات المستخدم...</p>;
-
-  return (
-    <div>
-      <h1>مرحباً {user.email}</h1>
-      {/* بقية محتوى الصفحة */}
-    </div>
-  );
-}
 export default function ProfilePage() {
   const supabase = createClientComponentClient();
   const [user, setUser] = useState(null);
@@ -41,9 +28,7 @@ export default function ProfilePage() {
         error: authError,
       } = await supabase.auth.getUser();
 
-      console.log('المستخدم من Supabase:', user);
       if (authError) {
-        console.error('خطأ في جلب المستخدم:', authError);
         setErrorMsg('فشل في الحصول على المستخدم.');
         setLoading(false);
         return;
@@ -63,9 +48,7 @@ export default function ProfilePage() {
         .eq('id', user.id)
         .single();
 
-      console.log('بيانات المستخدم من قاعدة البيانات:', data);
       if (error || !data) {
-        console.error('خطأ في جلب بيانات المستخدم من قاعدة البيانات:', error);
         setErrorMsg('لا يمكن تحميل بيانات المستخدم. تأكد من وجود حساب في قاعدة البيانات.');
       } else {
         setUserData(data);
@@ -94,86 +77,82 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen pb-20">
-      <header className="p-4 text-center">
+    <div className="min-h-screen pb-20 p-4">
+      <header className="text-center mb-6">
         <h1 className="text-2xl font-bold gold-text">الملف الشخصي</h1>
       </header>
 
-      <div className="p-4">
-        <div className="card">
-          <div className="flex items-center mb-6">
-            <div className="w-16 h-16 bg-background-gray rounded-full flex items-center justify-center mr-4">
-              <FaUser size={32} className="text-primary-gold" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">{userData.username}</h2>
-              <p className="text-sm text-gray-400">{userData.telegram_id}</p>
-              <p className="text-xs text-gray-500">
-                عضو منذ {new Date(userData.join_date).toLocaleDateString('ar-EG')}
-              </p>
-            </div>
+      <div className="card p-4 bg-background-gray rounded-lg mb-6">
+        <div className="flex items-center mb-6">
+          <div className="w-16 h-16 bg-background-black rounded-full flex items-center justify-center mr-4">
+            <FaUser size={32} className="text-primary-gold" />
           </div>
+          <div>
+            <h2 className="text-xl font-bold">{userData.username}</h2>
+            <p className="text-sm text-gray-400">{userData.telegram_id}</p>
+            <p className="text-xs text-gray-500">
+              عضو منذ {new Date(userData.join_date).toLocaleDateString('ar-EG')}
+            </p>
+          </div>
+        </div>
 
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-background-gray rounded-lg p-3 text-center">
-              <p className="text-sm text-gray-400">العملات</p>
-              <p className="text-lg font-bold gold-text">{userData.total_coins}</p>
-            </div>
-            <div className="bg-background-gray rounded-lg p-3 text-center">
-              <p className="text-sm text-gray-400">الإحالات</p>
-              <p className="text-lg font-bold gold-text">{userData.referrals}</p>
-            </div>
-            <div className="bg-background-gray rounded-lg p-3 text-center">
-              <p className="text-sm text-gray-400">المهام</p>
-              <p className="text-lg font-bold gold-text">{userData.completed_tasks}/4</p>
-            </div>
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="bg-background-black rounded-lg p-3 text-center">
+            <p className="text-sm text-gray-400">العملات</p>
+            <p className="text-lg font-bold gold-text">{userData.total_coins}</p>
+          </div>
+          <div className="bg-background-black rounded-lg p-3 text-center">
+            <p className="text-sm text-gray-400">الإحالات</p>
+            <p className="text-lg font-bold gold-text">{userData.referrals}</p>
+          </div>
+          <div className="bg-background-black rounded-lg p-3 text-center">
+            <p className="text-sm text-gray-400">المهام</p>
+            <p className="text-lg font-bold gold-text">{userData.completed_tasks}/4</p>
           </div>
         </div>
       </div>
 
       {/* قائمة الإعدادات */}
-      <div className="p-4">
-        <div className="card">
-          <h2 className="text-lg font-bold mb-4">الإعدادات</h2>
-          <div className="space-y-3">
-            <button className="flex items-center justify-between w-full p-3 bg-background-gray rounded-lg">
-              <div className="flex items-center">
-                <FaCog className="text-primary-gold mr-3" size={18} />
-                <span>إعدادات الحساب</span>
-              </div>
-              <span className="text-gray-400">›</span>
-            </button>
+      <div className="card p-4 bg-background-gray rounded-lg mb-6">
+        <h2 className="text-lg font-bold mb-4">الإعدادات</h2>
+        <div className="space-y-3">
+          <button className="flex items-center justify-between w-full p-3 bg-background-black rounded-lg">
+            <div className="flex items-center">
+              <FaCog className="text-primary-gold mr-3" size={18} />
+              <span>إعدادات الحساب</span>
+            </div>
+            <span className="text-gray-400">›</span>
+          </button>
 
-            <button className="flex items-center justify-between w-full p-3 bg-background-gray rounded-lg">
-              <div className="flex items-center">
-                <FaShieldAlt className="text-primary-gold mr-3" size={18} />
-                <span>الأمان والخصوصية</span>
-              </div>
-              <span className="text-gray-400">›</span>
-            </button>
+          <button className="flex items-center justify-between w-full p-3 bg-background-black rounded-lg">
+            <div className="flex items-center">
+              <FaShieldAlt className="text-primary-gold mr-3" size={18} />
+              <span>الأمان والخصوصية</span>
+            </div>
+            <span className="text-gray-400">›</span>
+          </button>
 
-            <button className="flex items-center justify-between w-full p-3 bg-background-gray rounded-lg">
-              <div className="flex items-center">
-                <FaInfoCircle className="text-primary-gold mr-3" size={18} />
-                <span>عن التطبيق</span>
-              </div>
-              <span className="text-gray-400">›</span>
-            </button>
+          <button className="flex items-center justify-between w-full p-3 bg-background-black rounded-lg">
+            <div className="flex items-center">
+              <FaInfoCircle className="text-primary-gold mr-3" size={18} />
+              <span>عن التطبيق</span>
+            </div>
+            <span className="text-gray-400">›</span>
+          </button>
 
-            <button className="flex items-center justify-between w-full p-3 bg-background-gray rounded-lg">
-              <div className="flex items-center">
-                <FaQuestionCircle className="text-primary-gold mr-3" size={18} />
-                <span>المساعدة والدعم</span>
-              </div>
-              <span className="text-gray-400">›</span>
-            </button>
-          </div>
+          <button className="flex items-center justify-between w-full p-3 bg-background-black rounded-lg">
+            <div className="flex items-center">
+              <FaQuestionCircle className="text-primary-gold mr-3" size={18} />
+              <span>المساعدة والدعم</span>
+            </div>
+            <span className="text-gray-400">›</span>
+          </button>
         </div>
       </div>
 
       {/* زر تسجيل الخروج */}
-      <div className="p-4">
-        <button className="secondary-button w-full">
+      <div className="mb-4">
+        <button className="secondary-button w-full flex items-center justify-center gap-2">
           <FaSignOutAlt size={18} />
           <span>تسجيل الخروج</span>
         </button>
