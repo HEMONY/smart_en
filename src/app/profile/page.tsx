@@ -1,5 +1,6 @@
 'use client';
 
+
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import {
   FaUser,
