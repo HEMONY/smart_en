@@ -1,30 +1,44 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import BottomNavigation from '@/components/layout/BottomNavigation';
-import {
-  FaUser,
-  FaSignOutAlt,
-  FaCog,
-  FaInfoCircle,
-  FaQuestionCircle,
-  FaShieldAlt
-} from 'react-icons/fa';
+import { FaUser, FaSignOutAlt, FaCog, FaInfoCircle, FaQuestionCircle, FaShieldAlt } from 'react-icons/fa';
 
 export default function ProfilePage() {
+  const supabase = createClientComponentClient();
   const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('smartCoinUser');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const fetchUserData = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        setUser(user);
+        const { data, error } = await supabase
+          .from('users')
+          .select('username, telegram_id, join_date, total_coins, referrals, completed_tasks')
+          .eq('id', user.id)
+          .single();
+
+        if (!error) {
+          setUserData(data);
+        } else {
+          console.error('خطأ في جلب بيانات المستخدم من قاعدة البيانات:', error);
+        }
+      }
+    };
+
+    fetchUserData();
   }, []);
 
-  if (!user) {
+  if (!userData) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>جارٍ تحميل البيانات...</p>
+      <div className="min-h-screen flex justify-center items-center text-lg text-gray-500">
+        جاري تحميل البيانات...
       </div>
     );
   }
@@ -44,24 +58,26 @@ export default function ProfilePage() {
               <FaUser size={32} className="text-primary-gold" />
             </div>
             <div>
-              <h2 className="text-xl font-bold">{user.username || 'مستخدم'}</h2>
-              <p className="text-sm text-gray-400">{user.telegramId || ''}</p>
-              <p className="text-xs text-gray-500">عضو منذ {new Date(user.joinDate).toLocaleDateString('ar-EG')}</p>
+              <h2 className="text-xl font-bold">{userData.username}</h2>
+              <p className="text-sm text-gray-400">{userData.telegram_id}</p>
+              <p className="text-xs text-gray-500">
+                عضو منذ {new Date(userData.join_date).toLocaleDateString('ar-EG')}
+              </p>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="bg-background-gray rounded-lg p-3 text-center">
               <p className="text-sm text-gray-400">العملات</p>
-              <p className="text-lg font-bold gold-text">{user.totalCoins || 0}</p>
+              <p className="text-lg font-bold gold-text">{userData.total_coins}</p>
             </div>
             <div className="bg-background-gray rounded-lg p-3 text-center">
               <p className="text-sm text-gray-400">الإحالات</p>
-              <p className="text-lg font-bold gold-text">{user.referrals || 0}</p>
+              <p className="text-lg font-bold gold-text">{userData.referrals}</p>
             </div>
             <div className="bg-background-gray rounded-lg p-3 text-center">
               <p className="text-sm text-gray-400">المهام</p>
-              <p className="text-lg font-bold gold-text">{user.completedTasks || 0}/4</p>
+              <p className="text-lg font-bold gold-text">{userData.completed_tasks}/4</p>
             </div>
           </div>
         </div>
@@ -109,13 +125,7 @@ export default function ProfilePage() {
 
       {/* زر تسجيل الخروج */}
       <div className="p-4">
-        <button
-          className="secondary-button w-full"
-          onClick={() => {
-            localStorage.removeItem('smartCoinUser');
-            window.location.href = '/login';
-          }}
-        >
+        <button className="secondary-button w-full">
           <FaSignOutAlt size={18} />
           <span>تسجيل الخروج</span>
         </button>
