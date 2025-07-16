@@ -1,5 +1,6 @@
 import '@/app/globals.css';
 import { Inter } from 'next/font/google';
+import { UserProvider } from '@/context/UserProvider'; // ✅ أضف هذا السطر
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -8,11 +9,13 @@ export const metadata = {
   description: 'منصة Smart Coin للتعدين والمكافآت',
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar" dir="rtl">
       <body className={`${inter.className} bg-background-black text-white min-h-screen`}>
-        {children}
+        <UserProvider>
+          {children}
+        </UserProvider>
       </body>
     </html>
   );
