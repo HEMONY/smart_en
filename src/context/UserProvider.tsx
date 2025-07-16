@@ -15,9 +15,22 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const supabase = createClientComponentClient();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
+    const getUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) console.error('فشل في جلب المستخدم:', error);
+      setUser(data?.user ?? null);
+    };
+
+    getUser();
+
+    // مراقبة تغيّر الجلسة
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
     });
+
+    return () => {
+      listener?.subscription.unsubscribe();
+    };
   }, []);
 
   return (
