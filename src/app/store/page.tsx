@@ -19,8 +19,8 @@ export default function StorePage() {
 
   // بطاقات المتجر - سيتم إضافة بطاقات أمازون وغيرها هنا لاحقاً
   const digitalCards = [
-    { id: 1, title: 'بطاقة Google Play', price: 1500, image: '/assets/icons/google_play_store_icon.png', description: 'بطاقة بقيمة 10 دولار' }, // مسار مؤقت للصورة
-    { id: 2, title: 'بطاقة iTunes', price: 1500, image: '/assets/icons/apple_store_icon.png', description: 'بطاقة بقيمة 10 دولار' }, // مسار مؤقت للصورة
+    { id: 1, title: 'بطاقة Google Play', price: 1500, image: '/assets/icons/gplay.jpg', description: 'بطاقة بقيمة 10 دولار' }, // مسار مؤقت للصورة
+    { id: 2, title: 'بطاقة iTunes', price: 1500, image: '/assets/icons/itunes.jpg', description: 'بطاقة بقيمة 10 دولار' }, // مسار مؤقت للصورة
     { id: 3, title: 'بطاقة Amazon $25', price: 3750, image: '/assets/icons/amazon_gift_card_25.png', description: 'بطاقة بقيمة 25 دولار' },
     { id: 4, title: 'بطاقة Amazon $100', price: 15000, image: '/assets/icons/amazon_gift_card_100.png', description: 'بطاقة بقيمة 100 دولار' },
     // { id: 5, title: 'بطاقة Steam', price: 2000, image: '/assets/steam.png', description: 'بطاقة بقيمة 15 دولار' },
