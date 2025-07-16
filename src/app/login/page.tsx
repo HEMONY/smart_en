@@ -8,8 +8,9 @@ import Link from 'next/link';
 
 export default function LoginPage() {
   const telegramContainerRef = useRef(null);
+  const myPageButtonRef = useRef(null); // للزر الثاني
 
-  useEffect(() => {
+  const loadTelegramWidget = (containerRef) => {
     const script = document.createElement("script");
     script.src = "https://telegram.org/js/telegram-widget.js?7";
     script.setAttribute("data-telegram-login", "SMARtcoinNbot");
@@ -20,11 +21,19 @@ export default function LoginPage() {
     script.setAttribute("data-lang", "ar");
     script.async = true;
 
-    if (telegramContainerRef.current) {
-      telegramContainerRef.current.innerHTML = ""; // تأكد من عدم التكرار
-      telegramContainerRef.current.appendChild(script);
+    if (containerRef.current) {
+      containerRef.current.innerHTML = ""; // لمنع التكرار
+      containerRef.current.appendChild(script);
     }
+  };
+
+  useEffect(() => {
+    loadTelegramWidget(telegramContainerRef);
   }, []);
+
+  const handleMyPageClick = () => {
+    loadTelegramWidget(myPageButtonRef);
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -48,6 +57,7 @@ export default function LoginPage() {
           <h2 className="text-xl font-bold mb-4 text-center">اختر طريقة تسجيل الدخول المفضلة لديك</h2>
           
           <div className="space-y-6">
+            {/* تسجيل الدخول عبر تيليجرام */}
             <div>
               <h3 className="text-lg mb-2">تسجيل الدخول عبر تيليجرام</h3>
               <p className="text-sm text-gray-400 mb-3">
@@ -55,7 +65,24 @@ export default function LoginPage() {
               </p>
               <div ref={telegramContainerRef} className="flex justify-center" />
             </div>
-            
+
+            {/* زر صفحتي */}
+            <div className="border-t border-gray-700 pt-6">
+              <h3 className="text-lg mb-2">صفحتي</h3>
+              <p className="text-sm text-gray-400 mb-3">
+                اضغط لعرض صفحتك الشخصية. سيتم التحقق من هويتك عبر تيليجرام.
+              </p>
+              <button
+                onClick={handleMyPageClick}
+                className="secondary-button w-full"
+              >
+                <FaTelegramPlane size={20} />
+                <span>الدخول إلى صفحتي</span>
+              </button>
+              <div ref={myPageButtonRef} className="flex justify-center mt-4" />
+            </div>
+
+            {/* محفظة TON */}
             <div className="border-t border-gray-700 pt-6">
               <h3 className="text-lg mb-2">تسجيل الدخول عبر محفظة TON</h3>
               <p className="text-sm text-gray-400 mb-3">
