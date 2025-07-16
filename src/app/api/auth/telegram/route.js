@@ -52,147 +52,101 @@ function verifyTelegramData(data) {
   }
 }
 
-export async function POST(request) {
-  try {
-    // The Telegram widget sends data via query parameters on GET request, not POST body
-    // Let's adjust to handle GET request and query parameters
-    const url = new URL(request.url);
-    const queryParams = Object.fromEntries(url.searchParams.entries());
-    console.log('🔍 queryParams المستلمة من Telegram:', queryParams);
-
-    // التحقق من صحة البيانات
-    /*if (!verifyTelegramData(queryParams)) {
-      console.warn('Telegram data verification failed.');
-      // Redirect back to login with an error message
-      const errorUrl = new URL('/login?error=telegram_auth_failed', request.url);
-      return NextResponse.redirect(errorUrl.toString(), 302);
-    }*/
-
-    const telegramUserData = queryParams;
-
-    // البحث عن المستخدم في قاعدة البيانات
-    let { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('telegram_id', telegramUserData.user_id)
-      .single();
-    console.log('📦 نتيجة البحث في Supabase:', { user, error });
-
-    // إذا لم يكن المستخدم موجودًا، قم بإنشائه
-    if (error && error.code === 'PGRST116') {
-      const walletAddress = generateWalletAddress();
-      console.log('🆕 إنشاء مستخدم جديد مع البيانات:', {
-        telegram_id: telegramUserData.user_id,
-        username: telegramUserData.username || `user${telegramUserData.user_id}`,
-        wallet_address: walletAddress,
-        first_name: telegramUserData.first_name,
-        last_name: telegramUserData.last_name,
-        photo_url: telegramUserData.photo_url
-      });
-
-      const { data: newUser, error: createError } = await supabase
-        .from('users')
-        .insert([
-          {
-            telegram_id: telegramUserData.user_id,
-            username: telegramUserData.username || `user${telegramUserData.user_id}`,
-            wallet_address: walletAddress,
-            first_name: telegramUserData.first_name, // Store first name if available
-            last_name: telegramUserData.last_name,   // Store last name if available
-            photo_url: telegramUserData.photo_url    // Store photo url if available
-          }
-        ])
-        .select()
-        .single(); // Expecting a single new user
-
-      if (createError) {
-        console.error('Supabase insert error:', createError);
-        const errorUrl = new URL('/login?error=user_creation_failed', request.url);
-        return NextResponse.redirect(errorUrl.toString(), 302);
-      }
-
-      user = newUser;
-    } else if (error) {
-      console.error('Supabase select error:', error);
-      const errorUrl = new URL('/login?error=database_error', request.url);
-      return NextResponse.redirect(errorUrl.toString(), 302);
-    } else {
-      // Optional: Update existing user data if needed (e.g., username, photo_url)
-      const updates = {};
-      if (telegramUserData.username && user.username !== telegramUserData.username) updates.username = telegramUserData.username;
-      if (telegramUserData.first_name && user.first_name !== telegramUserData.first_name) updates.first_name = telegramUserData.first_name;
-      if (telegramUserData.last_name && user.last_name !== telegramUserData.last_name) updates.last_name = telegramUserData.last_name;
-      if (telegramUserData.photo_url && user.photo_url !== telegramUserData.photo_url) updates.photo_url = telegramUserData.photo_url;
-
-      if (Object.keys(updates).length > 0) {
-          const { error: updateError } = await supabase
-              .from('users')
-              .update(updates)
-              .eq('id', user.id);
-          if (updateError) {
-              console.error('Supabase update error:', updateError);
-              // Continue even if update fails, login is still successful
-          }
-      }
-    }
-
-    // --- Session Handling ---
-    // We need to create a session for the user. Since this is server-side,
-    // ✅ توليد magiclink token وتسجيل الجلسة من جهة العميل
-    const { data: tokenData, error: jwtError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email: `${telegramUserData.user_id}@smartcoin.fake`, // بريد وهمي باستخدام user_id
-    });
-    
-    if (jwtError || !tokenData?.action_link) {
-      console.error('❌ فشل توليد الجلسة:', jwtError);
-      const errorUrl = new URL('/login?error=session_failed', request.url);
-      return NextResponse.redirect(errorUrl.toString(), 302);
-    }
-    
-    // استخراج التوكن من رابط magiclink
-    const jwt = new URL(tokenData.action_link).searchParams.get('token');
-    
-    // إعادة التوجيه لصفحة /auth/callback مع التوكن
-    const redirectUrl = new URL(`/auth/callback?token=${jwt}`, request.url);
-    return NextResponse.redirect(redirectUrl.toString(), 302);
-
-    // we might need to use Supabase admin functions or handle JWTs.
-    // For now, let's assume Supabase handles cookies if configured correctly.
-    // Redirecting should allow the client-side Supabase client to pick up the session.
-
-    // Redirect to dashboard upon successful login/signup
-    //const redirectUrl = new URL('/dashboard', request.url);
-    // We might need to set cookies here if Supabase doesn't do it automatically
-    // based on the redirect from Telegram widget.
-    // This part requires careful handling of Supabase auth flow.
-    // For now, just redirect.
-    //return NextResponse.redirect(redirectUrl.toString(), 302);
-
-
-
-
-  } catch (error) {
-    console.error('Server error:', error);
-    const errorUrl = new URL('/login?error=server_error', request.url); // Redirect back to login with error
-    return NextResponse.redirect(errorUrl.toString(), 302);
-  }
-}
-
-// Add a GET handler since Telegram widget uses GET for callback
 export async function GET(request) {
-    // Reuse the POST logic, as the data comes in query params for GET
-    return await POST(request);
+  const url = new URL(request.url);
+  const queryParams = Object.fromEntries(url.searchParams.entries());
+
+  console.log('🔍 queryParams المستلمة من Telegram:', queryParams);
+
+  // تحقق من صحة التوقيع
+  /*if (!verifyTelegramData(queryParams)) {
+    return NextResponse.redirect(new URL('/login?error=invalid_telegram', request.url));
+  }*/
+
+  const telegramId = queryParams.user_id;
+  const fakeEmail = `${telegramId}@telegram.smartcoin.fake`;
+
+  // تحقق من وجود المستخدم في auth
+  let { data: authUser, error: authError } = await supabase.auth.admin.getUserByEmail(fakeEmail);
+
+  if (!authUser) {
+    // إنشاء المستخدم في auth
+    const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+      email: fakeEmail,
+      email_confirm: true,
+      password: crypto.randomBytes(32).toString('hex'),
+      user_metadata: {
+        telegram_id: telegramId,
+        username: queryParams.username,
+        first_name: queryParams.first_name,
+        last_name: queryParams.last_name,
+        photo_url: queryParams.photo_url,
+      }
+    });
+
+    if (createError) {
+      console.error('❌ إنشاء المستخدم في auth فشل:', createError);
+      return NextResponse.redirect(new URL('/login?error=auth_failed', request.url));
+    }
+
+    authUser = newUser;
+  }
+
+  // تحقق من وجود المستخدم في جدول users، وإذا لم يكن موجودًا أنشئه
+  let { data: dbUser, error: dbError } = await supabase
+    .from('users')
+    .select('*')
+    .eq('telegram_id', telegramId)
+    .single();
+
+  if (dbError && dbError.code === 'PGRST116') {
+    const walletAddress = generateWalletAddress();
+    const { error: insertError } = await supabase
+      .from('users')
+      .insert([
+        {
+          telegram_id: telegramId,
+          username: queryParams.username,
+          first_name: queryParams.first_name,
+          last_name: queryParams.last_name,
+          photo_url: queryParams.photo_url,
+          wallet_address: walletAddress,
+        }
+      ]);
+
+    if (insertError) {
+      console.error('❌ فشل في إدخال المستخدم بجدول users:', insertError);
+      return NextResponse.redirect(new URL('/login?error=user_insert_failed', request.url));
+    }
+  }
+
+  // توليد MagicLink
+  const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+    type: 'magiclink',
+    email: fakeEmail,
+  });
+
+  if (linkError || !linkData?.action_link) {
+    console.error('❌ فشل توليد magiclink:', linkError);
+    return NextResponse.redirect(new URL('/login?error=link_failed', request.url));
+  }
+
+  const token = new URL(linkData.action_link).searchParams.get('token');
+  const redirectUrl = new URL(`/auth/callback?token=${token}`, request.url);
+  return NextResponse.redirect(redirectUrl.toString());
 }
 
+// إعادة استخدام نفس المنطق مع POST
+export async function POST(request) {
+  return await GET(request);
+}
 
-// توليد عنوان محفظة عشوائي (Consider a more robust method for production)
+// توليد عنوان محفظة عشوائي
 function generateWalletAddress() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = 'EQC'; // Example prefix
-  for (let i = 0; i < 45; i++) { // Longer address
+  let result = 'EQC';
+  for (let i = 0; i < 45; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
 }
-
