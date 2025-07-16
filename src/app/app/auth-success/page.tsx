@@ -1,4 +1,5 @@
-'use client'; // ⬅️ مطلوب لجعل الصفحة تعمل فقط على العميل
+'use client';
+export const dynamic = 'force-dynamic'; // ⬅️ هذا يمنع الـ prerendering statically
 
 import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
