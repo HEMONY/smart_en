@@ -1,5 +1,5 @@
 'use client';
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'; // ⬅️ يمنع الـ SSG
 
 import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
