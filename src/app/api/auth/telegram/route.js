@@ -129,20 +129,55 @@ export async function GET(request) {
   }
 
   // توليد MagicLink
-  const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+  // ✅ توليد بريد وهمي من معرف التيليجرام
+  const fakeEmail = `${telegramUserData.user_id}@smartcoin.fake`;
+  
+  // ✅ تحقق من وجود المستخدم في auth
+  let { data: existingUser, error: getUserError } = await supabase.auth.admin.getUserByEmail(fakeEmail);
+  
+  if (getUserError && getUserError.message !== 'User not found') {
+    console.error('❌ فشل التحقق من وجود المستخدم:', getUserError);
+    const errorUrl = new URL('/login?error=auth_check_failed', request.url);
+    return NextResponse.redirect(errorUrl.toString(), 302);
+  }
+  
+  // ✅ إذا لم يكن موجودًا، أنشئه في auth
+  if (!existingUser) {
+    const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
+      email: fakeEmail,
+      email_confirm: true,
+      user_metadata: {
+        telegram_id: telegramUserData.user_id,
+        username: telegramUserData.username,
+        first_name: telegramUserData.first_name,
+        last_name: telegramUserData.last_name,
+      }
+    });
+  
+    if (createUserError) {
+      console.error('❌ فشل إنشاء مستخدم auth:', createUserError);
+      const errorUrl = new URL('/login?error=auth_user_creation_failed', request.url);
+      return NextResponse.redirect(errorUrl.toString(), 302);
+    }
+  }
+  
+  // ✅ توليد magic link
+  const { data: tokenData, error: jwtError } = await supabase.auth.admin.generateLink({
     type: 'magiclink',
     email: fakeEmail,
   });
-
-  if (linkError || !linkData?.action_link) {
-    console.error('❌ فشل توليد magiclink:', linkError);
-    return NextResponse.redirect(new URL('/login?error=link_failed', request.url));
+  
+  if (jwtError || !tokenData?.action_link) {
+    console.error('❌ فشل توليد magiclink:', jwtError);
+    const errorUrl = new URL('/login?error=session_failed', request.url);
+    return NextResponse.redirect(errorUrl.toString(), 302);
   }
+  
+  // ✅ إعادة التوجيه إلى صفحة الكول باك مع التوكن
+  const jwt = new URL(tokenData.action_link).searchParams.get('token');
+  const redirectUrl = new URL(`/auth/callback?token=${jwt}`, request.url);
+  return NextResponse.redirect(redirectUrl.toString(), 302);
 
-  const token = new URL(linkData.action_link).searchParams.get('token');
-  const redirectUrl = new URL(`/auth/callback?token=${token}`, request.url);
-  return NextResponse.redirect(redirectUrl.toString());
-}
 
 // إعادة استخدام نفس المنطق مع POST
 export async function POST(request) {
