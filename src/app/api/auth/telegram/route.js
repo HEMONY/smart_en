@@ -1,6 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
-import crypto from 'crypto';
+const { createClient } = require('@supabase/supabase-js');
+const { NextResponse } = require('next/server');
+const crypto = require('crypto');
 
 // --- Telegram API Credentials ---
 // !!! SECURITY WARNING: Move these to environment variables (.env file) !!!
@@ -52,7 +52,7 @@ function verifyTelegramData(data) {
   }
 }
 
-export async function GET(request) {
+export async function POST(request) {
   const url = new URL(request.url);
   const queryParams = Object.fromEntries(url.searchParams.entries());
 
@@ -180,10 +180,11 @@ export async function GET(request) {
 
 
 // إعادة استخدام نفس المنطق مع POST
-export async function POST(request) {
-  return await GET(request);
+export async function GET(request) {
+  return await POST(request);
 }
 
+module.exports = { GET, POST };
 // توليد عنوان محفظة عشوائي
 function generateWalletAddress() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
