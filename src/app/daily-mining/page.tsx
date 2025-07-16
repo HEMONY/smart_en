@@ -178,5 +178,5 @@ const DailyMiningPage = () => {
     </div>
   );
 };
-
+ 
 export default DailyMiningPage;
