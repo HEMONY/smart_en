@@ -32,6 +32,8 @@ export default function ProfilePage() {
         .select('username, telegram_id, join_date, total_coins, referrals, completed_tasks')
         .eq('id', user.id)
         .single();
+      console.log("Supabase data =>", data);
+      console.log("Supabase error =>", error);
 
       if (error || !data) {
         setErrorMsg('تعذر تحميل بيانات الحساب.');
