@@ -138,17 +138,36 @@ export async function POST(request) {
 
     // --- Session Handling ---
     // We need to create a session for the user. Since this is server-side,
+    // ✅ توليد magiclink token وتسجيل الجلسة من جهة العميل
+    const { data: tokenData, error: jwtError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: `${telegramUserData.user_id}@smartcoin.fake`, // بريد وهمي باستخدام user_id
+    });
+    
+    if (jwtError || !tokenData?.action_link) {
+      console.error('❌ فشل توليد الجلسة:', jwtError);
+      const errorUrl = new URL('/login?error=session_failed', request.url);
+      return NextResponse.redirect(errorUrl.toString(), 302);
+    }
+    
+    // استخراج التوكن من رابط magiclink
+    const jwt = new URL(tokenData.action_link).searchParams.get('token');
+    
+    // إعادة التوجيه لصفحة /auth/callback مع التوكن
+    const redirectUrl = new URL(`/auth/callback?token=${jwt}`, request.url);
+    return NextResponse.redirect(redirectUrl.toString(), 302);
+
     // we might need to use Supabase admin functions or handle JWTs.
     // For now, let's assume Supabase handles cookies if configured correctly.
     // Redirecting should allow the client-side Supabase client to pick up the session.
 
     // Redirect to dashboard upon successful login/signup
-    const redirectUrl = new URL('/dashboard', request.url);
+    //const redirectUrl = new URL('/dashboard', request.url);
     // We might need to set cookies here if Supabase doesn't do it automatically
     // based on the redirect from Telegram widget.
     // This part requires careful handling of Supabase auth flow.
     // For now, just redirect.
-    return NextResponse.redirect(redirectUrl.toString(), 302);
+    //return NextResponse.redirect(redirectUrl.toString(), 302);
 
 
 
