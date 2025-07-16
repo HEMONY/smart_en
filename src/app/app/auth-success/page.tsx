@@ -1,27 +1,23 @@
 'use client';
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
+import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function AuthSuccessPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const userId = searchParams.get('user_id');
 
   useEffect(() => {
-    const userId = searchParams.get('user_id');
     if (userId) {
       localStorage.setItem('smartCoinUser', JSON.stringify({ id: userId }));
-      router.push('/profile'); // أو أي صفحة رئيسية
-    } else {
-      alert('فشل تسجيل الدخول.');
-      router.push('/login');
+      window.location.href = '/dashboard'; // إعادة التوجيه
     }
-  }, [router, searchParams]);
+  }, [userId]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen text-lg">
-      جاري تسجيل الدخول...
+    <div className="min-h-screen flex items-center justify-center text-lg text-gray-400">
+      يتم تحميل حسابك...
     </div>
   );
 }
