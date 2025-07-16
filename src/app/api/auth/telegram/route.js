@@ -9,7 +9,7 @@ const TELEGRAM_BOT_TOKEN = '7790436103:AAH4KwfhqwqYeeVzRwxrVhk3ZlTHkzHoP40'; // 
 
 // إعداد عميل Supabase
 const supabaseUrl = 'https://xsxbeihsavosrxjyzmga.supabase.co';
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzeGJlaWhzYXZvc3J4anl6bWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjI2ODEsImV4cCI6MjA2NzEzODY4MX0.79iTU8QrexMFSrg_CesL_vOSwQ0TWxq3iN8TsVDWE-o';
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzeGJlaWhzYXZvc3J4anl6bWdhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTU2MjY4MSwiZXhwIjoyMDY3MTM4NjgxfQ.RZ-dxp7GSWBY5ExGejKViMFb6FRtcagDdDtNE6w8CV4';
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // التحقق من صحة بيانات تيليغرام
