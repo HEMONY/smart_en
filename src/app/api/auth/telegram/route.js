@@ -67,7 +67,15 @@ export async function GET(request) {
   const fakeEmail = `${telegramId}@telegram.smartcoin.fake`;
 
   // تحقق من وجود المستخدم في auth
-  let { data: authUser, error: authError } = await supabase.auth.admin.getUserByEmail(fakeEmail);
+ // let { data: authUser, error: authError } = await supabase.auth.admin.getUserByEmail(fakeEmail);
+  const { data: usersList, error: listError } = await supabase.auth.admin.listUsers();
+  if (listError) {
+    console.error('❌ فشل جلب المستخدمين:', listError);
+    return NextResponse.redirect(new URL('/login?error=auth_list_failed', request.url));
+  }
+  
+  let authUser = usersList.users.find(user => user.email === fakeEmail);
+
 
   if (!authUser) {
     // إنشاء المستخدم في auth
