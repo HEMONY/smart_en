@@ -1,22 +1,37 @@
-import '@/app/globals.css';
-import { Inter } from 'next/font/google';
-import { UserProvider } from '@/context/UserProvider';
+'use client';
 
-const inter = Inter({ subsets: ['latin'] });
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-export const metadata = {
-  title: 'Smart Coin',
-  description: 'منصة Smart Coin للتعدين والمكافآت',
-};
+interface UserContextType {
+  user: any | null;
+  setUser: (user: any | null) => void;
+}
 
-export default function RootLayout({ children }) {
+const UserContext = createContext<UserContextType | undefined>(undefined);
+
+function UserProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<any | null>(null);
+  const supabase = createClientComponentClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+  }, []);
+
   return (
-    <html lang="ar" dir="rtl">
-      <body className={`${inter.className} bg-background-black text-white min-h-screen`}>
-        <UserProvider>
-          {children}
-        </UserProvider>
-      </body>
-    </html>
+    <UserContext.Provider value={{ user, setUser }}>
+      {children}
+    </UserContext.Provider>
   );
 }
+
+function useUser() {
+  const context = useContext(UserContext);
+  if (!context) throw new Error('useUser must be used within UserProvider');
+  return context;
+}
+
+// ✅ هذا التعديل المهم
+export { UserProvider, useUser };
