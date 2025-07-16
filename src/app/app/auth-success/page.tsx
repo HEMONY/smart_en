@@ -11,13 +11,13 @@ export default function AuthSuccessPage() {
   useEffect(() => {
     if (userId) {
       localStorage.setItem('smartCoinUser', JSON.stringify({ id: userId }));
-      window.location.href = '/dashboard'; // إعادة التوجيه
+      window.location.href = '/dashboard';
     }
   }, [userId]);
 
   return (
     <div className="min-h-screen flex items-center justify-center text-lg text-gray-400">
-      يتم تحميل حسابك...
+      جاري تحويلك إلى حسابك...
     </div>
   );
 }
