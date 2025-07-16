@@ -143,7 +143,9 @@ export async function POST(request) {
     // Redirecting should allow the client-side Supabase client to pick up the session.
 
     // Redirect to dashboard upon successful login/signup
-    const redirectUrl = new URL('/dashboard', request.url);
+    //const redirectUrl = new URL('/dashboard', request.url);
+    const redirectUrl = new URL(`/auth-success?user_id=${user.id}`, request.url);
+
     // We might need to set cookies here if Supabase doesn't do it automatically
     // based on the redirect from Telegram widget.
     // This part requires careful handling of Supabase auth flow.
