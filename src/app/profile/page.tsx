@@ -11,29 +11,36 @@ import {
 } from 'react-icons/fa';
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useUser } from '@/context/UserProvider';
 import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
-  const { user } = useUser();
   const supabase = createClientComponentClient();
   const router = useRouter();
 
+  const [userId, setUserId] = useState<string | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // قراءة المستخدم من localStorage
   useEffect(() => {
-    if (!user) return;
+    const storedUser = localStorage.getItem('smartCoinUser');
+    if (!storedUser) return;
+
+    const userObj = JSON.parse(storedUser);
+    setUserId(userObj.id);
+  }, []);
+
+  // تحميل بيانات المستخدم من Supabase
+  useEffect(() => {
+    if (!userId) return;
 
     const fetchUserData = async () => {
       const { data, error } = await supabase
         .from('users')
         .select('username, telegram_id, join_date, total_coins, referrals, completed_tasks')
-        .eq('id', user.id)
+        .eq('id', userId)
         .single();
-      console.log("Supabase data =>", data);
-      console.log("Supabase error =>", error);
 
       if (error || !data) {
         setErrorMsg('تعذر تحميل بيانات الحساب.');
@@ -45,14 +52,16 @@ export default function ProfilePage() {
     };
 
     fetchUserData();
-  }, [user]);
+  }, [userId]);
 
+  // تسجيل الخروج
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/login'); // تأكد أن لديك صفحة login
+    localStorage.removeItem('smartCoinUser');
+    router.push('/login');
   };
 
-  if (!user) {
+  if (!userId) {
     return (
       <div className="min-h-screen flex items-center justify-center text-lg text-gray-400">
         الرجاء تسجيل الدخول أولاً.
