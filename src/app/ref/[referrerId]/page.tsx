@@ -14,15 +14,11 @@ export default function ReferrerPage({ params }: RefPageProps) {
   const { referrerId } = params;
 
   useEffect(() => {
-    // سجل الإحالة في قاعدة البيانات عبر API
     fetch('/referrals/increment', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ referrerId }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }).then(() => {
-      // توجيه المستخدم إلى بوت التليجرام مع referrerId
+    }).finally(() => {
       router.replace(`https://t.me/SMARtcoinNbot?start=${referrerId}`);
     });
   }, [referrerId, router]);
