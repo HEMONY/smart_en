@@ -15,7 +15,7 @@ export default function ReferrerPage({ params }: RefPageProps) {
 
   useEffect(() => {
     // سجل الإحالة في قاعدة البيانات عبر API
-    fetch('/api/referral', {
+    fetch('/referrals/increment', {
       method: 'POST',
       body: JSON.stringify({ referrerId }),
       headers: {
