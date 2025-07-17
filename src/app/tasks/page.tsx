@@ -69,7 +69,7 @@ export default function TasksPage() {
         .eq('telegram_id', userId);
 
       if (!error && data) {
-        setCompletedTasks(data.map(item => item.task_id));
+        setCompletedTasks(data.map(item => item.completed_tasks));
       } else {
         console.error('Error fetching completed tasks:', error);
       }
