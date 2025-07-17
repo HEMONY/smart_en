@@ -36,7 +36,9 @@ export default function ProfilePage() {
     if (!userId) return;
 
     const fetchUserData = async () => {
+      console.log('🔍 Fetching user with telegram_id:', userId);
       const { data, error } = await supabase
+        
         .from('users')
         .select('username, telegram_id, join_date, total_coins, referrals, completed_tasks')
         .eq('telegram_id', userId)
