@@ -56,7 +56,7 @@ export default function ReferralsPage() {
       const { data, error } = await supabase
         .from('users')
         .select('referrals')
-        .eq('telegram_id', userId)
+        .eq('id', userId)
         .single();
 
       if (!error && data) {
