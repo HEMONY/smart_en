@@ -64,7 +64,7 @@ export default function TasksPage() {
       const { data, error } = await supabase
         .from('users')
         .select('completed_tasks')
-        .eq('telegram_id', userId)
+        .eq('id', userId)
         .single();
 
       if (!error && data) {
@@ -87,7 +87,7 @@ export default function TasksPage() {
     const { error } = await supabase
       .from('users')
       .update({ completed_tasks: newCount })
-      .eq('telegram_id', userId);
+      .eq('id', userId);
 
     if (error) {
       console.error('Failed to update completed tasks:', error);
