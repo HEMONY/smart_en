@@ -41,7 +41,7 @@ export default function ProfilePage() {
         
         .from('users')
         .select('username, telegram_id, created_at, balance, referrals, completed_tasks')
-        .eq('telegram_id', userId)
+        .eq('id', userId)
         .single();
 
       if (error || !data) {
