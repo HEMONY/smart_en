@@ -14,10 +14,10 @@ export async function POST(req: Request) {
   }
 
   // زيادة عدد الإحالات
-  const { data, error } = await supabase
+   const { data, error } = await supabase
     .from('users')
-    .update({ referrals: supabase.rpc('increment_referrals', { id_input: referrerId }) }) // إن استخدمت فانكشن
-    .eq('telegram_id', referrerId) // أو id حسب العمود
+    .update({ referrals: (supabase.raw('referrals + 1') as any) })
+    .eq('id', referrerId)
     .select();
 
   if (error) {
