@@ -14,12 +14,24 @@ export default function ReferrerPage({ params }: RefPageProps) {
   const { referrerId } = params;
 
   useEffect(() => {
-    // هنا ممكن تضيف منطق تسجيل ال Referral في DB أو إرسال API
-    console.log('Referral ID:', referrerId);
+    // حفظ referrerId في localStorage لتخزينه مؤقتاً إلى أن يسجل المستخدم
+    if (referrerId) {
+      localStorage.setItem('referrerId', referrerId);
 
-    // بعد تسجيل الإحالة توجه المستخدم مثلاً لصفحة تسجيل أو الصفحة الرئيسية
+      // اختيارياً: إرسال طلب لزيادة عدد الإحالات الآن (إن أردت)
+      fetch('/api/referral/increment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ referrerId }),
+      }).catch((err) => {
+        console.error('Failed to increase referral count:', err);
+      });
+    }
+
     const timeout = setTimeout(() => {
-      router.replace('/referrals'); // أو أي صفحة تريد إعادة التوجيه لها
+      router.replace('/referrals'); // تغيير المسار إذا أردت
     }, 3000);
 
     return () => clearTimeout(timeout);
