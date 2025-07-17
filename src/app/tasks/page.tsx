@@ -87,8 +87,8 @@ export default function TasksPage() {
 
     // تحديث قاعدة البيانات
     const { error } = await supabase
-      .from('user_tasks')
-      .insert([{ user_id: userId, task_id: taskId }]);
+      .from('users')
+      .insert([{ telegram_id: userId, completed_tasks: taskId }]);
 
     if (error) {
       console.error('Failed to mark task as completed:', error);
