@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation'; // ✅ تم إضافة هذه السطر
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase/client';
 import { Loader2 } from 'lucide-react';
 
 const DailyMiningPage = () => {
+  const router = useRouter(); // ✅ تم استخدام الراوتر
+
   const [canClaim, setCanClaim] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [lastClaimTime, setLastClaimTime] = useState<number | null>(null);
@@ -142,6 +145,16 @@ const DailyMiningPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-zinc-950 to-zinc-900 text-white">
+      {/* زر الرجوع */}
+      <div className="w-full max-w-lg mb-4">
+        <Button
+          onClick={() => router.push('/dashboard')}
+          className="bg-gray-700 hover:bg-gray-600 text-white w-full"
+        >
+          ← الرجوع إلى لوحة التحكم
+        </Button>
+      </div>
+
       <Card className="w-full max-w-lg shadow-xl border border-zinc-800">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-yellow-400 animate-pulse">
@@ -178,5 +191,5 @@ const DailyMiningPage = () => {
     </div>
   );
 };
- 
+
 export default DailyMiningPage;
