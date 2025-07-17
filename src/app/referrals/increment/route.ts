@@ -13,10 +13,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Missing referrerId' }, { status: 400 });
   }
 
-  // زيادة عدد الإحالات
-   const { data, error } = await supabase
+  // جلب المستخدم الحالي لمعرفة عدد الإحالات الحالي
+  const { data: user, error: fetchError } = await supabase
     .from('users')
-    .update({ referrals: (supabase.raw('referrals + 1') as any) })
+    .select('referrals')
+    .eq('id', referrerId)
+    .single();
+
+  if (fetchError || !user) {
+    return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  }
+
+  const currentReferrals = user.referrals || 0;
+
+  // تحديث عدد الإحالات
+  const { data, error } = await supabase
+    .from('users')
+    .update({ referrals: currentReferrals + 1 })
     .eq('id', referrerId)
     .select();
 
