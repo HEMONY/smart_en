@@ -14,34 +14,23 @@ export default function ReferrerPage({ params }: RefPageProps) {
   const { referrerId } = params;
 
   useEffect(() => {
-    // حفظ referrerId في localStorage لتخزينه مؤقتاً إلى أن يسجل المستخدم
-    if (referrerId) {
-      localStorage.setItem('referrerId', referrerId);
-
-      // اختيارياً: إرسال طلب لزيادة عدد الإحالات الآن (إن أردت)
-      fetch('/api/referral/increment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ referrerId }),
-      }).catch((err) => {
-        console.error('Failed to increase referral count:', err);
-      });
-    }
-
-    const timeout = setTimeout(() => {
-      router.replace('/referrals'); // تغيير المسار إذا أردت
-    }, 3000);
-
-    return () => clearTimeout(timeout);
+    // سجل الإحالة في قاعدة البيانات عبر API
+    fetch('/api/referral', {
+      method: 'POST',
+      body: JSON.stringify({ referrerId }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }).then(() => {
+      // توجيه المستخدم إلى بوت التليجرام مع referrerId
+      router.replace(`https://t.me/YourTelegramBotUsername?start=${referrerId}`);
+    });
   }, [referrerId, router]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
-      <h1 className="text-2xl font-bold mb-4">شكراً لزيارة رابط الإحالة!</h1>
-      <p className="mb-4">تم تسجيل الإحالة الخاصة بك: <strong>{referrerId}</strong></p>
-      <p>سيتم توجيهك تلقائياً خلال ثوانٍ...</p>
+      <h1 className="text-2xl font-bold mb-4">جاري توجيهك إلى التليجرام...</h1>
+      <p>معرف الإحالة: <strong>{referrerId}</strong></p>
     </div>
   );
 }
