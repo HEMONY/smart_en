@@ -22,6 +22,21 @@ export default function ReferralsPage() {
     { count: 50, reward: "25$" },
     { count: 60, reward: "31$" },
   ];
+  const shareReferralLink = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'انضم إلى SmartCoin باستخدام رابط الإحالة الخاص بي',
+          url: referralLink,
+        });
+      } catch (error) {
+        console.error('فشل المشاركة:', error);
+      }
+    } else {
+      navigator.clipboard.writeText(referralLink);
+      alert('تم نسخ رابط الإحالة إلى الحافظة!');
+    }
+  };
 
   // قراءة المستخدم من localStorage
   useEffect(() => {
@@ -30,7 +45,7 @@ export default function ReferralsPage() {
 
     const parsed = JSON.parse(storedUser);
     setUserId(parsed.id);
-    setReferralLink(`https://smartcoin.app/ref/${parsed.id}`);
+    setReferralLink(`https://smart-en.vercel.app/ref/${parsed.id}`);
   }, []);
 
   // جلب عدد الإحالات من Supabase
@@ -130,7 +145,7 @@ export default function ReferralsPage() {
             </p>
           </div>
 
-          <button className="primary-button w-full mt-4">
+          <button className="primary-button w-full mt-4" onClick={shareReferralLink}>
             <FaLink size={16} />
             <span>مشاركة الرابط</span>
           </button>
