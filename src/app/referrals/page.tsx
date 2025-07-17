@@ -1,14 +1,17 @@
-"use client";
+'use client';
 
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { FaUsers, FaLink, FaCoins } from 'react-icons/fa';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function ReferralsPage() {
-  const [referralCount, setReferralCount] = useState(12);
-  const [referralLink, setReferralLink] = useState("https://smartcoin.app/ref/user123");
-  
+  const [referralCount, setReferralCount] = useState<number>(0);
+  const [referralLink, setReferralLink] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
+  const supabase = createClientComponentClient();
+
   // جدول المكافآت
   const rewardTiers = [
     { count: 16, reward: "1$" },
@@ -20,7 +23,36 @@ export default function ReferralsPage() {
     { count: 60, reward: "31$" },
   ];
 
-  // العثور على المستوى التالي
+  // قراءة المستخدم من localStorage
+  useEffect(() => {
+    const storedUser = localStorage.getItem('smartCoinUser');
+    if (!storedUser) return;
+
+    const parsed = JSON.parse(storedUser);
+    setUserId(parsed.id);
+    setReferralLink(`https://smartcoin.app/ref/${parsed.id}`);
+  }, []);
+
+  // جلب عدد الإحالات من Supabase
+  useEffect(() => {
+    const fetchReferralCount = async () => {
+      if (!userId) return;
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('referrals')
+        .eq('telegram_id', userId)
+        .single();
+
+      if (!error && data) {
+        setReferralCount(data.referrals || 0);
+      }
+    };
+
+    fetchReferralCount();
+  }, [userId]);
+
+  // المستوى التالي
   const getNextTier = () => {
     for (const tier of rewardTiers) {
       if (referralCount < tier.count) {
@@ -35,7 +67,7 @@ export default function ReferralsPage() {
 
   const copyReferralLink = () => {
     navigator.clipboard.writeText(referralLink);
-    // يمكن إضافة إشعار هنا
+    // يمكن إضافة إشعار لاحقاً
   };
 
   return (
@@ -53,12 +85,12 @@ export default function ReferralsPage() {
               <h2 className="text-lg font-bold">عدد الإحالات</h2>
               <div className="flex items-center mt-1">
                 <span className="text-3xl font-bold gold-text">{referralCount}</span>
-                <Image 
-                  src="/assets/smart-coin-logo.png" 
-                  alt="Smart Coin" 
-                  width={24} 
-                  height={24} 
-                  className="mr-2" 
+                <Image
+                  src="/assets/smart-coin-logo.png"
+                  alt="Smart Coin"
+                  width={24}
+                  height={24}
+                  className="mr-2"
                 />
               </div>
             </div>
@@ -74,8 +106,8 @@ export default function ReferralsPage() {
                 <span className="gold-text">المكافأة: {nextTier.reward}</span>
               </div>
               <div className="referral-progress">
-                <div 
-                  className="referral-progress-bar" 
+                <div
+                  className="referral-progress-bar"
                   style={{ width: `${progress}%` }}
                 ></div>
               </div>
@@ -111,23 +143,29 @@ export default function ReferralsPage() {
           <h2 className="text-lg font-bold mb-4">جدول المكافآت</h2>
           <div className="space-y-3">
             {rewardTiers.map((tier, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className={`flex justify-between items-center p-3 rounded-lg ${
                   referralCount >= tier.count ? 'bg-background-gray' : 'bg-background-dark'
                 }`}
               >
                 <div className="flex items-center">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
-                    referralCount >= tier.count ? 'bg-primary-gold text-background-black' : 'bg-background-gray text-gray-400'
-                  }`}>
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                      referralCount >= tier.count
+                        ? 'bg-primary-gold text-background-black'
+                        : 'bg-background-gray text-gray-400'
+                    }`}
+                  >
                     <FaUsers size={16} />
                   </div>
                   <span>{tier.count} إحالة</span>
                 </div>
-                <div className={`flex items-center ${
-                  referralCount >= tier.count ? 'text-primary-gold' : 'text-gray-400'
-                }`}>
+                <div
+                  className={`flex items-center ${
+                    referralCount >= tier.count ? 'text-primary-gold' : 'text-gray-400'
+                  }`}
+                >
                   <FaCoins size={14} className="mr-1" />
                   <span>{tier.reward}</span>
                 </div>
@@ -142,4 +180,3 @@ export default function ReferralsPage() {
     </div>
   );
 }
-
