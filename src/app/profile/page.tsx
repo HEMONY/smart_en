@@ -40,7 +40,7 @@ export default function ProfilePage() {
       const { data, error } = await supabase
         
         .from('users')
-        .select('username, telegram_id, join_date, total_coins, referrals, completed_tasks')
+        .select('username, telegram_id, created_at, total_coins, referrals, completed_tasks')
         .eq('telegram_id', userId)
         .single();
 
