@@ -105,7 +105,7 @@ export default function ProfilePage() {
               <h2 className="text-xl font-bold">{userData.username}</h2>
               <p className="text-sm text-gray-400">{userData.telegram_id}</p>
               <p className="text-xs text-gray-500">
-                عضو منذ {new Date(userData.join_date).toLocaleDateString('ar-EG')}
+                عضو منذ {new Date(userData.created_at).toLocaleDateString('ar-EG')}
               </p>
             </div>
           </div>
@@ -113,7 +113,7 @@ export default function ProfilePage() {
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="bg-background-gray rounded-lg p-3 text-center">
               <p className="text-sm text-gray-400">العملات</p>
-              <p className="text-lg font-bold gold-text">{userData.total_coins}</p>
+              <p className="text-lg font-bold gold-text">{userData.balance}</p>
             </div>
             <div className="bg-background-gray rounded-lg p-3 text-center">
               <p className="text-sm text-gray-400">الإحالات</p>
