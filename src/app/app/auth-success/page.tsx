@@ -1,5 +1,4 @@
 'use client';
-export const dynamic = 'force-dynamic'; // ⬅️ هذا يمنع الـ prerendering statically
 
 import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
@@ -15,7 +14,7 @@ export default function AuthSuccessPage() {
       localStorage.setItem('smartCoinUser', JSON.stringify({ id: userId }));
       router.replace('/dashboard');
     }
-  }, [userId]);
+  }, [userId, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center text-lg text-gray-600">
