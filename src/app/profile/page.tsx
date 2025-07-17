@@ -60,8 +60,10 @@ export default function ProfilePage() {
     localStorage.removeItem('smartCoinUser');
     router.push('/login');
   };
+  console.log('userId:', userId);
 
   if (!userId) {
+
     return (
       <div className="min-h-screen flex items-center justify-center text-lg text-gray-400">
         الرجاء تسجيل الدخول أولاً.
