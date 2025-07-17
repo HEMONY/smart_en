@@ -23,7 +23,7 @@ export default function ReferrerPage({ params }: RefPageProps) {
       },
     }).then(() => {
       // توجيه المستخدم إلى بوت التليجرام مع referrerId
-      router.replace(`https://t.me/YourTelegramBotUsername?start=${referrerId}`);
+      router.replace(`https://t.me/SMARtcoinNbot?start=${referrerId}`);
     });
   }, [referrerId, router]);
 
