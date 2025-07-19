@@ -1,50 +1,66 @@
 'use client';
-
-import { useState, useEffect } from 'react';
-import { FaCoins, FaInfoCircle } from 'react-icons/fa';
-import BottomNavigation from '@/components/layout/BottomNavigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import axios from 'axios';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Dashboard() {
-  const [miningAvailable, setMiningAvailable] = useState(true);
-  const [miningLoading, setMiningLoading] = useState(false);
-  const [miningError, setMiningError] = useState<string | null>(null);
+  const { data: session } = useSession();
+  const [miningAvailable, setMiningAvailable] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [balance, setBalance] = useState(0);
   const [nextMiningTime, setNextMiningTime] = useState<Date | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const supabase = createClientComponentClient();
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
-        checkLastMining(user.id);
-      }
-    };
-    fetchUserData();
-  }, []);
+    if (session?.user?.email) {
+      fetchMiningStatus();
+      fetchBalance();
+    }
+  }, [session]);
 
-  const checkLastMining = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('last_mining')
-      .eq('id', userId)
-      .single();
+  const fetchMiningStatus = async () => {
+    try {
+      const response = await axios.get('/api/mining-status', {
+        params: { email: session?.user?.email },
+      });
 
-    if (data?.last_mining) {
-      const lastTime = new Date(data.last_mining);
-      const now = new Date();
-      const diff = now.getTime() - lastTime.getTime();
-      const hoursDiff = diff / (1000 * 60 * 60);
-
-      if (hoursDiff < 24) {
-        const nextTime = new Date(lastTime.getTime() + 24 * 60 * 60 * 1000);
-        setNextMiningTime(nextTime);
+      if (response.data.available) {
+        setMiningAvailable(true);
+        setNextMiningTime(null);
+      } else {
         setMiningAvailable(false);
-        startCountdown(nextTime);
+        setNextMiningTime(new Date(response.data.nextMiningTime));
       }
+    } catch (error) {
+      console.error('Error fetching mining status:', error);
+    }
+  };
+
+  const fetchBalance = async () => {
+    try {
+      const response = await axios.get('/api/get-balance', {
+        params: { email: session?.user?.email },
+      });
+      setBalance(response.data.balance);
+    } catch (error) {
+      console.error('Error fetching balance:', error);
+    }
+  };
+
+  const handleMine = async () => {
+    try {
+      const response = await axios.post('/api/mine', {
+        email: session?.user?.email,
+      });
+
+      if (response.data.success) {
+        setMiningAvailable(false);
+        setNextMiningTime(new Date(response.data.nextMiningTime));
+        fetchBalance(); // تحديث الرصيد بعد التعدين
+      }
+    } catch (error) {
+      console.error('Error mining:', error);
     }
   };
 
@@ -60,121 +76,65 @@ export default function Dashboard() {
         return;
       }
 
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-      setCountdown({ days: 0, hours, minutes, seconds });
+      setCountdown({ days, hours, minutes, seconds });
     }, 1000);
 
     return () => clearInterval(interval);
   };
 
-  const handleStartMining = async () => {
-    if (!miningAvailable || miningLoading || !userId) return;
-
-    setMiningLoading(true);
-    setMiningError(null);
-
-    try {
-      const now = new Date().toISOString();
-
-      // تحديث وقت التعدين
-      const { error: timeError } = await supabase
-        .from('users')
-        .update({ last_mining: now })
-        .eq('id', userId);
-
-      if (timeError) throw timeError;
-
-      // زيادة mining_rate بمقدار 1 (الرصيد سيحدث تلقائيًا في قاعدة البيانات)
-      const { error: rpcError } = await supabase.rpc('increment_mining_rate', {
-        user_id_param: userId,
-        amount_param: 1,
-      });
-
-      if (rpcError) throw rpcError;
-
-      const nextTime = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
-      setNextMiningTime(nextTime);
-      startCountdown(nextTime);
-      setMiningAvailable(false);
-    } catch (error: any) {
-      setMiningError(error.message || 'حدث خطأ أثناء التعدين');
-    } finally {
-      setMiningLoading(false);
+  useEffect(() => {
+    let cleanup: (() => void) | undefined;
+    if (nextMiningTime) {
+      cleanup = startCountdown(nextMiningTime);
     }
-  };
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, [nextMiningTime]);
+
+  if (!session) return <div>Loading...</div>;
 
   return (
-    <div className="min-h-screen pb-20">
-      <header className="p-4 text-center">
-        <h1 className="text-2xl font-bold gold-text">Smart Coin</h1>
-      </header>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white px-4">
+      <h1 className="text-3xl font-bold mb-6">Welcome to the Dashboard</h1>
 
-      <div className="p-4">
-        <div className="countdown-container flex justify-center gap-4 text-center">
-          <div className="countdown-item"><div className="text-xl font-semibold">{countdown.days}</div><div>يوم</div></div>
-          <div className="countdown-item"><div className="text-xl font-semibold">{countdown.hours}</div><div>ساعة</div></div>
-          <div className="countdown-item"><div className="text-xl font-semibold">{countdown.minutes}</div><div>دقيقة</div></div>
-          <div className="countdown-item"><div className="text-xl font-semibold">{countdown.seconds}</div><div>ثانية</div></div>
+      <div className="bg-gray-800 p-6 rounded-xl shadow-lg text-center mb-6 w-full max-w-md">
+        <p className="text-xl mb-2">Your Balance</p>
+        <p className="text-4xl font-bold text-green-400 mb-2">{balance} Coins</p>
+        <div className="flex justify-center items-center space-x-2 mt-2">
+          <Image src="/coin.svg" alt="coin" width={24} height={24} />
+          <span className="text-sm text-gray-400">Earn more by mining and referrals!</span>
         </div>
       </div>
 
-      <div className="p-4">
-        {/* رسم بياني وهمي */}
-        <div className="card bg-white rounded-lg p-4 shadow-md">
-          <h2 className="text-lg font-bold mb-4 text-right">نمو العملة المتوقع</h2>
-          <div className="h-64 relative">
-            {/* الرسم */}
-            <div className="absolute bottom-0 right-[95%] h-[95%] w-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[80%] h-[75%] w-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[65%] h-[50%] w-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[50%] h-[35%] w-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[35%] h-[20%] w-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[20%] h-[10%] w-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[5%] h-[5%] w-2 rounded-full bg-primary-gold"></div>
+      <div className="bg-gray-800 p-6 rounded-xl shadow-lg text-center w-full max-w-md">
+        {miningAvailable ? (
+          <button
+            onClick={handleMine}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg text-lg"
+          >
+            Mine Now
+          </button>
+        ) : (
+          <div>
+            <p className="mb-2 text-yellow-400">Next mining available in:</p>
+            <div className="text-2xl font-mono">
+              {countdown.days}d : {countdown.hours}h : {countdown.minutes}m : {countdown.seconds}s
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      <div className="p-4 flex flex-col items-center">
-        <button
-          className={`mining-button ${!miningAvailable || miningLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-          onClick={handleStartMining}
-          disabled={!miningAvailable || miningLoading}
-        >
-          {miningLoading ? (
-            <span className="flex items-center">
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0..." />
-              </svg>
-              جاري التعدين...
-            </span>
-          ) : (
-            <>
-              <FaCoins size={24} />
-              <span>ابدأ الآن</span>
-            </>
-          )}
-        </button>
-
-        {!miningAvailable && (
-          <p className="text-sm text-gray-400 mt-2">
-            يمكنك التعدين مرة أخرى بعد {countdown.hours} ساعة و {countdown.minutes} دقيقة
-          </p>
-        )}
-
-        {miningError && <p className="text-sm text-red-600 mt-2">{miningError}</p>}
-
-        <Link href="/about" className="mt-6 secondary-button flex items-center gap-1">
-          <FaInfoCircle size={18} />
-          <span>تعرف على المزيد</span>
+      <div className="mt-8 text-center text-sm text-gray-400">
+        <Link href="/referrals" className="underline">
+          Go to Referral Page
         </Link>
       </div>
-
-      <BottomNavigation currentPath="/dashboard" />
     </div>
   );
 }
