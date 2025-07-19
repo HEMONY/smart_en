@@ -98,7 +98,7 @@ export default function LoginPage() {
         
         <div className="text-center">
           <p className="text-sm text-gray-400">
-            بالتسجيل، أنت توافق على <Link href="/terms" className="text-primary-gold">شروط الاستخدام</Link> و <Link href="/privacy" className="text-primary-gold">سياسة الخصوصية</Link>
+            بالتسجيل، أنت توافق على <Link href="/term" className="text-primary-gold">شروط الاستخدام</Link> و <Link href="/privacy" className="text-primary-gold">سياسة الخصوصية</Link>
           </p>
         </div>
       </div>
