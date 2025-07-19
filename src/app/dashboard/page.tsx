@@ -20,14 +20,14 @@ export default function Dashboard() {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
-        await ensureStartDate(user.id);
+        await checkOrSetStartDate(user.id);
         checkLastMining(user.id);
       }
     };
     fetchUserData();
   }, []);
 
-  const ensureStartDate = async (userId: string) => {
+  const checkOrSetStartDate = async (userId: string) => {
     const { data, error } = await supabase
       .from('users')
       .select('start_date')
@@ -36,28 +36,21 @@ export default function Dashboard() {
 
     if (!data?.start_date) {
       const now = new Date().toISOString();
-      await supabase
-        .from('users')
-        .update({ start_date: now })
-        .eq('id', userId);
+      await supabase.from('users').update({ start_date: now }).eq('id', userId);
+      startCountdown(new Date(new Date().getTime() + 43 * 24 * 60 * 60 * 1000));
+    } else {
+      const endDate = new Date(data.start_date);
+      endDate.setDate(endDate.getDate() + 43);
+      startCountdown(endDate);
     }
   };
 
   const checkLastMining = async (userId: string) => {
     const { data, error } = await supabase
       .from('users')
-      .select('last_mining, start_date')
+      .select('last_mining')
       .eq('id', userId)
       .single();
-
-    if (data?.start_date) {
-      const startDate = new Date(data.start_date);
-      const endDate = new Date(startDate.getTime() + 43 * 24 * 60 * 60 * 1000);
-      const now = new Date();
-      if (now > endDate) return;
-
-      startCountdown(endDate);
-    }
 
     if (data?.last_mining) {
       const lastTime = new Date(data.last_mining);
@@ -80,8 +73,6 @@ export default function Dashboard() {
 
       if (diff <= 0) {
         clearInterval(interval);
-        setMiningAvailable(true);
-        setNextMiningTime(null);
         return;
       }
 
@@ -121,7 +112,6 @@ export default function Dashboard() {
 
       const nextTime = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
       setNextMiningTime(nextTime);
-      startCountdown(nextTime);
       setMiningAvailable(false);
     } catch (error: any) {
       setMiningError(error.message || 'حدث خطأ أثناء التعدين');
@@ -149,12 +139,13 @@ export default function Dashboard() {
         <div className="card bg-white rounded-lg p-4 shadow-md">
           <h2 className="text-lg font-bold mb-4 text-right">نمو العملة المتوقع</h2>
           <div className="h-64 relative">
-            {[95, 80, 65, 50, 35, 20, 5].map((val, i) => (
-              <div
-                key={i}
-                className={`absolute bottom-0 right-[${val}%] h-[${Math.max(5, 100 - val)}%] w-2 rounded-full bg-primary-gold`}
-              ></div>
-            ))}
+            <div className="absolute bottom-0 right-[95%] h-[95%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[80%] h-[75%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[65%] h-[50%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[50%] h-[35%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[35%] h-[20%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[20%] h-[10%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[5%] h-[5%] w-2 rounded-full bg-primary-gold"></div>
           </div>
         </div>
       </div>
@@ -189,7 +180,10 @@ export default function Dashboard() {
 
         {miningError && <p className="text-sm text-red-600 mt-2">{miningError}</p>}
 
-       
+        <Link href="/about" className="mt-6 secondary-button flex items-center gap-1">
+          <FaInfoCircle size={18} />
+          <span>تعرف على المزيد</span>
+        </Link>
       </div>
 
       <BottomNavigation currentPath="/dashboard" />
