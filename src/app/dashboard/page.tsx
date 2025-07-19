@@ -1,37 +1,29 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaCoins } from 'react-icons/fa';
+import { FaCoins, FaInfoCircle } from 'react-icons/fa';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import Link from 'next/link';
 
 export default function Dashboard() {
   const [miningAvailable, setMiningAvailable] = useState(true);
   const [miningLoading, setMiningLoading] = useState(false);
-  const [miningError, setMiningError] = useState(null);
-  const [countdown, setCountdown] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
+  const [miningError, setMiningError] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [nextMiningTime, setNextMiningTime] = useState<Date | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const supabase = createClientComponentClient();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+    const fetchUserData = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
       if (user) {
-        setUser(user);
+        setUserId(user.id);
         checkLastMining(user.id);
       }
     };
-
-    fetchUser();
+    fetchUserData();
   }, []);
 
   const checkLastMining = async (userId: string) => {
@@ -72,49 +64,43 @@ export default function Dashboard() {
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-      setCountdown({
-        days: 0,
-        hours,
-        minutes,
-        seconds
-      });
+      setCountdown({ days: 0, hours, minutes, seconds });
     }, 1000);
 
     return () => clearInterval(interval);
   };
 
   const handleStartMining = async () => {
-    if (!miningAvailable || miningLoading || !user) return;
+    if (!miningAvailable || miningLoading || !userId) return;
 
     setMiningLoading(true);
     setMiningError(null);
 
     try {
-      const now = new Date();
+      const now = new Date().toISOString();
 
-      // تحديث التاريخ
-      const { error: updateTimeError } = await supabase
+      // تحديث وقت التعدين
+      const { error: timeError } = await supabase
         .from('users')
-        .update({ last_mining: now.toISOString() })
-        .eq('id', user.id);
+        .update({ last_mining: now })
+        .eq('id', userId);
 
-      if (updateTimeError) throw updateTimeError;
+      if (timeError) throw timeError;
 
-      // زيادة قيمة mining_rate بمقدار 1
-      const { data, error: miningError } = await supabase.rpc('increment_mining_rate', {
-        user_id_param: user.id,
+      // زيادة mining_rate بمقدار 1 (الرصيد سيحدث تلقائيًا في قاعدة البيانات)
+      const { error: rpcError } = await supabase.rpc('increment_mining_rate', {
+        user_id_param: userId,
         amount_param: 1,
       });
 
-      if (miningError) throw miningError;
+      if (rpcError) throw rpcError;
 
-      const nextTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      const nextTime = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
       setNextMiningTime(nextTime);
       startCountdown(nextTime);
       setMiningAvailable(false);
     } catch (error: any) {
-      console.error('خطأ في بدء التعدين:', error);
-      setMiningError(error.message || 'حدث خطأ أثناء بدء التعدين');
+      setMiningError(error.message || 'حدث خطأ أثناء التعدين');
     } finally {
       setMiningLoading(false);
     }
@@ -128,21 +114,26 @@ export default function Dashboard() {
 
       <div className="p-4">
         <div className="countdown-container flex justify-center gap-4 text-center">
-          <div className="countdown-item">
-            <div className="countdown-value text-xl font-semibold">{countdown.days}</div>
-            <div className="countdown-label">يوم</div>
-          </div>
-          <div className="countdown-item">
-            <div className="countdown-value text-xl font-semibold">{countdown.hours}</div>
-            <div className="countdown-label">ساعة</div>
-          </div>
-          <div className="countdown-item">
-            <div className="countdown-value text-xl font-semibold">{countdown.minutes}</div>
-            <div className="countdown-label">دقيقة</div>
-          </div>
-          <div className="countdown-item">
-            <div className="countdown-value text-xl font-semibold">{countdown.seconds}</div>
-            <div className="countdown-label">ثانية</div>
+          <div className="countdown-item"><div className="text-xl font-semibold">{countdown.days}</div><div>يوم</div></div>
+          <div className="countdown-item"><div className="text-xl font-semibold">{countdown.hours}</div><div>ساعة</div></div>
+          <div className="countdown-item"><div className="text-xl font-semibold">{countdown.minutes}</div><div>دقيقة</div></div>
+          <div className="countdown-item"><div className="text-xl font-semibold">{countdown.seconds}</div><div>ثانية</div></div>
+        </div>
+      </div>
+
+      <div className="p-4">
+        {/* رسم بياني وهمي */}
+        <div className="card bg-white rounded-lg p-4 shadow-md">
+          <h2 className="text-lg font-bold mb-4 text-right">نمو العملة المتوقع</h2>
+          <div className="h-64 relative">
+            {/* الرسم */}
+            <div className="absolute bottom-0 right-[95%] h-[95%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[80%] h-[75%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[65%] h-[50%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[50%] h-[35%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[35%] h-[20%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[20%] h-[10%] w-2 rounded-full bg-primary-gold"></div>
+            <div className="absolute bottom-0 right-[5%] h-[5%] w-2 rounded-full bg-primary-gold"></div>
           </div>
         </div>
       </div>
@@ -155,18 +146,9 @@ export default function Dashboard() {
         >
           {miningLoading ? (
             <span className="flex items-center">
-              <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5 text-background-black"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0..." />
               </svg>
               جاري التعدين...
             </span>
@@ -178,17 +160,18 @@ export default function Dashboard() {
           )}
         </button>
 
-        {!miningAvailable && nextMiningTime && (
+        {!miningAvailable && (
           <p className="text-sm text-gray-400 mt-2">
             يمكنك التعدين مرة أخرى بعد {countdown.hours} ساعة و {countdown.minutes} دقيقة
           </p>
         )}
 
-        {miningError && (
-          <p className="text-sm text-error-color mt-2">
-            {miningError}
-          </p>
-        )}
+        {miningError && <p className="text-sm text-red-600 mt-2">{miningError}</p>}
+
+        <Link href="/about" className="mt-6 secondary-button flex items-center gap-1">
+          <FaInfoCircle size={18} />
+          <span>تعرف على المزيد</span>
+        </Link>
       </div>
 
       <BottomNavigation currentPath="/dashboard" />
