@@ -12,6 +12,7 @@ import {
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function ProfilePage() {
   const supabase = createClientComponentClient();
@@ -36,9 +37,7 @@ export default function ProfilePage() {
     if (!userId) return;
 
     const fetchUserData = async () => {
-      console.log('🔍 Fetching user with telegram_id:', userId);
       const { data, error } = await supabase
-        
         .from('users')
         .select('username, telegram_id, created_at, balance, referrals, completed_tasks')
         .eq('id', userId)
@@ -62,10 +61,8 @@ export default function ProfilePage() {
     localStorage.removeItem('smartCoinUser');
     router.push('/login');
   };
-  console.log('userId:', userId);
 
   if (!userId) {
-
     return (
       <div className="min-h-screen flex items-center justify-center text-lg text-gray-400">
         الرجاء تسجيل الدخول أولاً.
@@ -132,15 +129,11 @@ export default function ProfilePage() {
         <div className="card">
           <h2 className="text-lg font-bold mb-4">الإعدادات</h2>
           <div className="space-y-3">
-            <button className="flex items-center justify-between w-full p-3 bg-background-gray rounded-lg">
-              <div className="flex items-center">
-                <FaCog className="text-primary-gold mr-3" size={18} />
-                <span>إعدادات الحساب</span>
-              </div>
-              <span className="text-gray-400">›</span>
-            </button>
-
-            <button className="flex items-center justify-between w-full p-3 bg-background-gray rounded-lg">
+            
+            <button
+              className="flex items-center justify-between w-full p-3 bg-background-gray rounded-lg"
+              onClick={() => router.push('/privacy')}
+            >
               <div className="flex items-center">
                 <FaShieldAlt className="text-primary-gold mr-3" size={18} />
                 <span>الأمان والخصوصية</span>
@@ -148,7 +141,10 @@ export default function ProfilePage() {
               <span className="text-gray-400">›</span>
             </button>
 
-            <button className="flex items-center justify-between w-full p-3 bg-background-gray rounded-lg">
+            <button
+              className="flex items-center justify-between w-full p-3 bg-background-gray rounded-lg"
+              onClick={() => router.push('/about')}
+            >
               <div className="flex items-center">
                 <FaInfoCircle className="text-primary-gold mr-3" size={18} />
                 <span>عن التطبيق</span>
@@ -156,7 +152,10 @@ export default function ProfilePage() {
               <span className="text-gray-400">›</span>
             </button>
 
-            <button className="flex items-center justify-between w-full p-3 bg-background-gray rounded-lg">
+            <button
+              className="flex items-center justify-between w-full p-3 bg-background-gray rounded-lg"
+              onClick={() => router.push('/support')}
+            >
               <div className="flex items-center">
                 <FaQuestionCircle className="text-primary-gold mr-3" size={18} />
                 <span>المساعدة والدعم</span>
