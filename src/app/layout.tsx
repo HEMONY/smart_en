@@ -16,7 +16,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <UserProvider>
           {children}
         </UserProvider>
-        {children}
 
         {/* JS SYNC Ad 1 */}
         <Script
