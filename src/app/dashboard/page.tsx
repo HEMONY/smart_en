@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaCoins, FaInfoCircle } from 'react-icons/fa';
+import { FaCoins } from 'react-icons/fa';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import Link from 'next/link';
 
 export default function Dashboard() {
   const [miningAvailable, setMiningAvailable] = useState(true);
@@ -93,19 +92,21 @@ export default function Dashboard() {
     try {
       const now = new Date();
 
-      const { error: updateError } = await supabase
+      // تحديث التاريخ
+      const { error: updateTimeError } = await supabase
         .from('users')
         .update({ last_mining: now.toISOString() })
         .eq('id', user.id);
 
-      if (updateError) throw updateError;
+      if (updateTimeError) throw updateTimeError;
 
-      const { error: rpcError } = await supabase.rpc('increment_balance', {
+      // زيادة قيمة mining_rate بمقدار 1
+      const { data, error: miningError } = await supabase.rpc('increment_mining_rate', {
         user_id_param: user.id,
-        amount_param: 20,
+        amount_param: 1,
       });
 
-      if (rpcError) throw rpcError;
+      if (miningError) throw miningError;
 
       const nextTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
       setNextMiningTime(nextTime);
@@ -142,33 +143,6 @@ export default function Dashboard() {
           <div className="countdown-item">
             <div className="countdown-value text-xl font-semibold">{countdown.seconds}</div>
             <div className="countdown-label">ثانية</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="p-4">
-        <div className="card bg-white rounded-lg p-4 shadow-md">
-          <h2 className="text-lg font-bold mb-4 text-right">نمو العملة المتوقع</h2>
-          <div className="h-64 relative">
-            <div className="absolute bottom-0 right-0 w-full h-px bg-gray-700"></div>
-            <div className="absolute right-0 top-0 h-full w-px bg-gray-700"></div>
-            <div className="absolute bottom-0 right-[5%] h-[5%] w-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[20%] h-[10%] w-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[35%] h-[20%] w-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[50%] h-[35%] w-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[65%] h-[50%] w-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[80%] h-[75%] w-2 rounded-full bg-primary-gold"></div>
-            <div className="absolute bottom-0 right-[95%] h-[95%] w-2 rounded-full bg-primary-gold"></div>
-            <svg className="absolute inset-0 w-full h-full pointer-events-none">
-              <path d="M 5% 95% L 20% 90% L 35% 80% L 50% 65% L 65% 50% L 80% 25% L 95% 5%" fill="none" stroke="#FFD700" strokeWidth="2" />
-            </svg>
-            <div className="absolute bottom-[-20px] right-[5%] text-xs text-gray-500">الآن</div>
-            <div className="absolute bottom-[-20px] right-[20%] text-xs text-gray-500">الإطلاق</div>
-            <div className="absolute bottom-[-20px] right-[35%] text-xs text-gray-500">شهر 1</div>
-            <div className="absolute bottom-[-20px] right-[50%] text-xs text-gray-500">شهر 2</div>
-            <div className="absolute bottom-[-20px] right-[65%] text-xs text-gray-500">شهر 3</div>
-            <div className="absolute bottom-[-20px] right-[80%] text-xs text-gray-500">شهر 6</div>
-            <div className="absolute bottom-[-20px] right-[95%] text-xs text-gray-500">سنة 1</div>
           </div>
         </div>
       </div>
@@ -215,11 +189,6 @@ export default function Dashboard() {
             {miningError}
           </p>
         )}
-
-        <Link href="/about" className="mt-6 secondary-button flex items-center gap-1">
-          <FaInfoCircle size={18} />
-          <span>تعرف على المزيد</span>
-        </Link>
       </div>
 
       <BottomNavigation currentPath="/dashboard" />
