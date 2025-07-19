@@ -1,24 +1,64 @@
-"use client";
+'use client';
 
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { FaCopy, FaDownload, FaUpload } from 'react-icons/fa';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function WalletPage() {
-  const [balance, setBalance] = useState(1250.75);
-  const [usdEquivalent, setUsdEquivalent] = useState(125.07);
-  const [walletAddress, setWalletAddress] = useState("EQCcR3-I9mfJ8O_1vIuI80NSx6V");
+  const [balance, setBalance] = useState<number>(0);
+  const [usdEquivalent, setUsdEquivalent] = useState(0);
+  const [walletAddress, setWalletAddress] = useState<string>('');
   const [withdrawalEnabled, setWithdrawalEnabled] = useState(false);
-  const [countdown, setCountdown] = useState({
-    days: 37,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  const supabase = createClientComponentClient();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const storedUser = localStorage.getItem('smartCoinUser');
+      if (!storedUser) return;
+
+      const parsed = JSON.parse(storedUser);
+      const userId = parsed.id;
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('balance, wallet_address, created_at')
+        .eq('id', userId)
+        .single();
+
+      if (!error && data) {
+        setBalance(data.balance || 0);
+        setWalletAddress(data.wallet_address || '---');
+
+        // تحويل الرصيد إلى USD (مثلاً 1 USD لكل 10 عملات)
+        setUsdEquivalent((data.balance || 0) / 10);
+
+        // حساب عدد الأيام منذ التسجيل
+        const createdDate = new Date(data.created_at);
+        const now = new Date();
+        const diffDays = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        // إذا مرّ أكثر من 37 يومًا، فعّل السحب
+        setWithdrawalEnabled(diffDays >= 37);
+
+        // عكس عدد الأيام المتبقية
+        setCountdown({
+          days: Math.max(0, 37 - diffDays),
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+        });
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(walletAddress);
-    // يمكن إضافة إشعار هنا
+    alert('تم نسخ العنوان!');
   };
 
   return (
@@ -33,7 +73,7 @@ export default function WalletPage() {
         <div className="card">
           <h2 className="text-lg mb-2 text-center">رصيدك الحالي</h2>
           <p className="text-5xl font-bold text-center gold-text mb-2">{balance.toLocaleString('ar-EG')}</p>
-          <p className="text-sm text-gray-400 text-center">${usdEquivalent.toLocaleString('ar-EG')} ≈</p>
+          <p className="text-sm text-gray-400 text-center">${usdEquivalent.toFixed(2)} ≈</p>
 
           <div className="mt-6 space-y-3">
             <button className="primary-button w-full">
@@ -41,7 +81,7 @@ export default function WalletPage() {
               <span>إيداع</span>
             </button>
 
-            <button 
+            <button
               className={`secondary-button w-full ${!withdrawalEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={!withdrawalEnabled}
             >
@@ -56,8 +96,8 @@ export default function WalletPage() {
                 السحب متاح بعد {countdown.days} يوم
               </p>
               <div className="w-full bg-gray-800 rounded-full h-2">
-                <div 
-                  className="bg-primary-gold h-2 rounded-full" 
+                <div
+                  className="bg-primary-gold h-2 rounded-full"
                   style={{ width: `${(37 - countdown.days) / 37 * 100}%` }}
                 ></div>
               </div>
@@ -86,16 +126,14 @@ export default function WalletPage() {
       <div className="p-4">
         <div className="card">
           <h2 className="text-lg mb-4">آخر المعاملات</h2>
-          {/* يمكن إضافة قائمة المعاملات هنا */}
+          {/* يمكن ربط سجل المعاملات هنا لاحقاً */}
           <p className="text-sm text-gray-400 text-center py-4">
             لا توجد معاملات حتى الآن
           </p>
         </div>
       </div>
 
-      {/* شريط التنقل السفلي */}
       <BottomNavigation currentPath="/wallet" />
     </div>
   );
 }
-
