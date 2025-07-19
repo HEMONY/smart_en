@@ -16,6 +16,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <UserProvider>
           {children}
         </UserProvider>
+        {children}
+
+        {/* JS SYNC Ad 1 */}
+        <Script
+          strategy="afterInteractive"
+          src="//pl27202088.profitableratecpm.com/1c/28/ce/1c28cea4764a32c6ff51305841262340.js"
+        />
+
+        {/* SocialBar_1 */}
+        <Script
+          strategy="afterInteractive"
+          src="//pl27202122.profitableratecpm.com/24/3e/ee/243eee94c6a0fa1cf865b310d6ade1eb.js"
+        />
       </body>
     </html>
   );
